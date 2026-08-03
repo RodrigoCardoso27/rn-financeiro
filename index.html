@@ -26,7 +26,7 @@
       --success: #10b981;
       --danger: #ef4444;
       --warn: #f59e0b;
-      --sodexo: #8b5cf6; /* Cor roxa exclusiva para o Sodexo */
+      --sodexo: #8b5cf6;
       --border: rgba(255, 255, 255, 0.08);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       --radius: 16px;
@@ -94,6 +94,8 @@
     .btn-success { background: var(--success); color: #fff; border: none; width: 100%; }
     .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
     .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-salario { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: var(--success); }
+    .btn-salario:hover { background: var(--success); color: #fff; }
 
     /* TABLES */
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 10px; }
@@ -196,7 +198,10 @@
   <!-- ==================== LANÇAMENTOS ==================== -->
   <div id="viewLancamentos" class="view-section">
     <div class="card">
-      <div class="card-header">✍️ Registrar Transação</div>
+      <div class="card-header">
+        <span>✍️ Registrar Transação</span>
+        <button class="btn btn-salario" onclick="lancarSalarioFixo()">💰 Receber Salário Fixo (R$ 2.500,00)</button>
+      </div>
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
         <div>
           <label>Tipo de Registro*</label>
@@ -213,7 +218,7 @@
         </div>
         <div>
           <label>Valor (R$)*</label>
-          <input type="number" id="lValor" step="0.01" placeholder="0.00">
+          <input type="text" id="lValor" placeholder="0,00" oninput="formatarMoedaInput(this)">
         </div>
         <div>
           <label>Data*</label>
@@ -300,6 +305,23 @@
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
     }
 
+    // ====== MÁSCARA & FORMATAÇÃO MONETÁRIA ======
+    function formatarMoedaInput(element) {
+        let v = element.value.replace(/\D/g, '');
+        if (v === '') { element.value = ''; return; }
+        v = (parseFloat(v) / 100).toFixed(2);
+        v = v.replace('.', ',');
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        element.value = v;
+    }
+
+    function converterValorParaFloat(valorStr) {
+        if (!valorStr) return 0;
+        if (typeof valorStr === 'number') return valorStr;
+        let limpo = valorStr.replace(/\./g, '').replace(',', '.');
+        return parseFloat(limpo) || 0;
+    }
+
     // ====== AUTENTICAÇÃO ======
     async function autenticar() {
         const u = document.getElementById('lUser').value.trim();
@@ -341,16 +363,33 @@
         if(event && event.currentTarget) event.currentTarget.classList.add('active');
     }
 
+    // ====== ATALHO SALÁRIO FIXO ======
+    function lancarSalarioFixo() {
+        const payload = { 
+            tipo: 'Receita', 
+            desc: 'Salário Fixo Mensal', 
+            valor: 2500.00, 
+            data: getHoje(), 
+            categoria: 'Salário', 
+            pagamento: 'Dinheiro / Pix', 
+            usuario: logado.nome 
+        };
+        rootDatabase.ref('financeiro_lancamentos').push(payload).then(() => {
+            showToast("Salário Fixo de R$ 2.500,00 registrado com sucesso!");
+        });
+    }
+
     // ====== LANÇAMENTOS FINANCEIROS ======
     function salvarLancamento() {
         const tipo = document.getElementById('lTipo').value;
         const desc = document.getElementById('lDesc').value.trim();
-        const valor = parseFloat(document.getElementById('lValor').value);
+        const valorRaw = document.getElementById('lValor').value;
+        const valor = converterValorParaFloat(valorRaw);
         const data = document.getElementById('lData').value;
         const cat = document.getElementById('lCategoria').value;
         const pag = document.getElementById('lPagto').value;
 
-        if(!desc || isNaN(valor) || !data) return showToast("Preencha todos os campos corretamente!", "error");
+        if(!desc || valor <= 0 || !data) return showToast("Preencha todos os campos corretamente!", "error");
 
         const payload = { tipo, desc, valor, data, categoria: cat, pagamento: pag, usuario: logado.nome };
         
@@ -385,7 +424,6 @@
 
                 todosLancamentos.push({ key: item.key, ...c });
 
-                // Lógica isolada para o Sodexo x Salário Base
                 if (c.tipo === 'Entrada Sodexo' || c.pagamento === 'Cartão Sodexo / VR') {
                     if (c.tipo === 'Entrada Sodexo') entradaSodexo += c.valor;
                     else if (c.tipo === 'Despesa') gastoSodexo += c.valor;
@@ -416,13 +454,15 @@
                 else if(c.tipo === 'Investimento') pillClass = 'pill-invest';
                 else if(c.tipo === 'Entrada Sodexo') pillClass = 'pill-sodexo';
 
+                const valorFormatado = c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
                 const rowHTML = `<tr>
                     <td>${c.data}</td>
                     <td><span class="pill ${pillClass}">${c.tipo}</span></td>
                     <td><b>${c.desc}</b></td>
                     <td>${c.categoria}</td>
                     <td>${c.pagamento}</td>
-                    <td>R$ ${c.valor.toFixed(2)}</td>
+                    <td>${valorFormatado}</td>
                     <td style="text-align:right"><button class="btn btn-danger" style="padding:4px 8px; font-size:.7rem;" onclick="deletarLancamento('${c.key}')">🗑</button></td>
                 </tr>`;
 
