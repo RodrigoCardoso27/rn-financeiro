@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omni Finance - Gestão & Serviços</title>
+  <title>R&N Financeiro - Gestão & Controle</title>
 
   <!-- Firebase RTDB compat -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -26,6 +26,7 @@
       --success: #10b981;
       --danger: #ef4444;
       --warn: #f59e0b;
+      --sodexo: #8b5cf6; /* Cor roxa exclusiva para o Sodexo */
       --border: rgba(255, 255, 255, 0.08);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       --radius: 16px;
@@ -55,7 +56,7 @@
     /* SIDEBAR */
     .sidebar { width: 280px; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(16px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 30px 20px; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; overflow-y: auto; }
     .logo-area { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; }
-    .logo-icon { font-size: 2rem; color: var(--brand); font-weight: 900; }
+    .logo-icon { font-size: 1.8rem; color: var(--brand); font-weight: 900; }
     .logo-text { font-weight: 900; font-size: 1.1rem; line-height: 1.2; letter-spacing: -0.5px; }
 
     .sidebar-title { padding: 20px 10px 8px 10px; font-size: 0.7rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; text-transform: uppercase; }
@@ -74,10 +75,10 @@
     .card-header { font-size: 1.15rem; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
     /* KPIS */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 24px; }
     .kpi-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; }
     .kpi-title { font-size: 0.65rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .kpi-value { font-size: 1.8rem; font-weight: 900; margin-top: 8px; color: var(--text); letter-spacing: -0.5px; }
+    .kpi-value { font-size: 1.6rem; font-weight: 900; margin-top: 8px; color: var(--text); letter-spacing: -0.5px; }
 
     /* FORMS & INPUTS */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
@@ -103,6 +104,7 @@
     .pill-receita { color: var(--success); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); }
     .pill-despesa { color: var(--danger); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
     .pill-invest { color: var(--brand); background: var(--brand-glow); border-color: rgba(14,165,233,0.2); }
+    .pill-sodexo { color: var(--sodexo); background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.3); }
   </style>
 </head>
 <body>
@@ -112,20 +114,20 @@
 <!-- TELA DE LOGIN -->
 <div id="telaLogin">
   <div class="login-card">
-    <div style="font-size: 3.5rem; margin-bottom: 15px; color: var(--brand);">💎</div>
-    <h2 style="margin-bottom: 10px; font-weight: 900; letter-spacing: -1px;">Omni Finance</h2>
-    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 25px;">Gestão Financeira & Serviços</p>
+    <div style="font-size: 3rem; margin-bottom: 15px; color: var(--brand); font-weight: 900;">R&N</div>
+    <h2 style="margin-bottom: 10px; font-weight: 900; letter-spacing: -1px;">R&N Financeiro</h2>
+    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 25px;">Gestão de Finanças & Benefícios</p>
     <input type="text" id="lUser" placeholder="Usuário" style="margin-bottom: 12px;">
     <input type="password" id="lPass" placeholder="Senha" onkeypress="if(event.key === 'Enter') autenticar()">
-    <button class="btn btn-primary" style="margin-top: 25px; height: 50px; font-size:1rem;" onclick="autenticar()">Acessar Sistema</button>
+    <button class="btn btn-primary" style="margin-top: 25px; height: 50px; font-size:1rem;" onclick="autenticar()">Acessar Painel</button>
   </div>
 </div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo-area">
-    <div class="logo-icon">💎</div>
-    <div class="logo-text">Omni Finance<br><span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">SaaS Control</span></div>
+    <div class="logo-icon">R&N</div>
+    <div class="logo-text">R&N Financeiro<br><span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">SaaS Control</span></div>
   </div>
 
   <div style="flex: 1;">
@@ -156,16 +158,16 @@
     <!-- KPIS -->
     <div class="kpi-grid">
       <div class="kpi-card" style="border-bottom: 3px solid var(--success);">
-        <div class="kpi-title">Entradas (Renda)</div><div class="kpi-value" id="kpiEntradas" style="color: var(--success);">R$ 0,00</div>
+        <div class="kpi-title">Salário / Entradas R$</div><div class="kpi-value" id="kpiEntradas" style="color: var(--success);">R$ 0,00</div>
       </div>
       <div class="kpi-card" style="border-bottom: 3px solid var(--danger);">
-        <div class="kpi-title">Saídas (Despesas)</div><div class="kpi-value" id="kpiSaidas" style="color: var(--danger);">R$ 0,00</div>
-      </div>
-      <div class="kpi-card" style="border-bottom: 3px solid var(--brand);">
-        <div class="kpi-title">Investimentos</div><div class="kpi-value" id="kpiInvest" style="color: var(--brand);">R$ 0,00</div>
+        <div class="kpi-title">Saídas / Despesas</div><div class="kpi-value" id="kpiSaidas" style="color: var(--danger);">R$ 0,00</div>
       </div>
       <div class="kpi-card" style="border-bottom: 3px solid var(--warn);">
-        <div class="kpi-title">Saldo Atual</div><div class="kpi-value" id="kpiSaldo">R$ 0,00</div>
+        <div class="kpi-title">Saldo Líquido (Dinheiro)</div><div class="kpi-value" id="kpiSaldo">R$ 0,00</div>
+      </div>
+      <div class="kpi-card" style="border-bottom: 3px solid var(--sodexo);">
+        <div class="kpi-title">💳 Saldo Sodexo / VR</div><div class="kpi-value" id="kpiSodexo" style="color: var(--sodexo);">R$ 0,00</div>
       </div>
     </div>
 
@@ -176,7 +178,7 @@
         <div style="height: 250px;"><canvas id="chartCategorias"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-header">💳 Forma de Pagamento</div>
+        <div class="card-header">💳 Distribuição por Meio de Pagamento</div>
         <div style="height: 250px;"><canvas id="chartPagamentos"></canvas></div>
       </div>
     </div>
@@ -199,14 +201,15 @@
         <div>
           <label>Tipo de Registro*</label>
           <select id="lTipo">
-            <option value="Receita">💰 Receita (Entrada)</option>
-            <option value="Despesa">💸 Despesa (Saída)</option>
-            <option value="Investimento">📈 Investimento</option>
+            <option value="Receita">💰 Receita (Salário / PIX / Dinheiro)</option>
+            <option value="Despesa">💸 Despesa (Saída Geral)</option>
+            <option value="Investimento">📈 Investimento / Reserva</option>
+            <option value="Entrada Sodexo">🎟️ Carga de Benefício (Sodexo / VR)</option>
           </select>
         </div>
         <div>
           <label>Descrição*</label>
-          <input type="text" id="lDesc" placeholder="Ex: Salário, Supermercado">
+          <input type="text" id="lDesc" placeholder="Ex: Salário, Sodexo VR, Mercado">
         </div>
         <div>
           <label>Valor (R$)*</label>
@@ -222,7 +225,8 @@
         <div>
           <label>Categoria*</label>
           <select id="lCategoria">
-            <option value="Salário">💰 Salário</option>
+            <option value="Salário">💰 Salário / Renda</option>
+            <option value="Sodexo / VR">🎟️ Benefício Empresa (Sodexo / VR)</option>
             <option value="Moradia">🏠 Moradia</option>
             <option value="Supermercado">🛒 Supermercado</option>
             <option value="Assinaturas">📺 Assinaturas</option>
@@ -231,12 +235,12 @@
           </select>
         </div>
         <div>
-          <label>Forma de Pagamento*</label>
+          <label>Forma de Pagamento / Origem*</label>
           <select id="lPagto">
             <option value="Dinheiro / Pix">💸 Dinheiro / Pix</option>
+            <option value="Cartão Sodexo / VR">🎟️ Cartão Sodexo / VR</option>
             <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
             <option value="Cartão de Débito">💳 Cartão de Débito</option>
-            <option value="Vale Refeição / Alimentação">🎟️ Vale</option>
           </select>
         </div>
       </div>
@@ -262,8 +266,8 @@
   <!-- ==================== CATEGORIAS ==================== -->
   <div id="viewCategorias" class="view-section">
     <div class="card">
-      <div class="card-header">🏷️ Configurações do Sistema</div>
-      <p style="color: var(--muted); font-size: 0.9rem;">Gerencie as categorias de renda, despesas e opções de pagamentos para personalizar sua planilha.</p>
+      <div class="card-header">🏷️ Configurações do R&N Financeiro</div>
+      <p style="color: var(--muted); font-size: 0.9rem;">Gerencie as opções de benefícios da empresa (Sodexo, VR, VA) e métodos de pagamento integrados ao sistema.</p>
     </div>
   </div>
 
@@ -307,7 +311,7 @@
             snap.forEach(child => {
                 if (child.key.toLowerCase() === u.toLowerCase() && String(child.val().senha) === String(p)) {
                     logado = { nome: child.key, role: child.val().role || 'user' };
-                    localStorage.setItem('omni_finance_user', JSON.stringify(logado));
+                    localStorage.setItem('rn_finance_user', JSON.stringify(logado));
                     location.reload();
                     ok = true;
                 }
@@ -316,11 +320,11 @@
         });
     }
 
-    function logout() { localStorage.removeItem('omni_finance_user'); location.reload(); }
+    function logout() { localStorage.removeItem('rn_finance_user'); location.reload(); }
 
     window.onload = function() {
         document.getElementById('lData').value = getHoje();
-        const salvo = localStorage.getItem('omni_finance_user');
+        const salvo = localStorage.getItem('rn_finance_user');
         if(salvo) {
             logado = JSON.parse(salvo);
             document.getElementById('telaLogin').style.display = 'none';
@@ -371,6 +375,7 @@
             if(tbCompleta) tbCompleta.innerHTML = "";
 
             let e = 0, s = 0, inv = 0;
+            let entradaSodexo = 0, gastoSodexo = 0;
             let catStats = {}, pagStats = {};
             todosLancamentos = [];
 
@@ -380,26 +385,37 @@
 
                 todosLancamentos.push({ key: item.key, ...c });
 
-                if (c.tipo === 'Receita') e += c.valor;
-                else if (c.tipo === 'Despesa') {
-                    s += c.valor;
+                // Lógica isolada para o Sodexo x Salário Base
+                if (c.tipo === 'Entrada Sodexo' || c.pagamento === 'Cartão Sodexo / VR') {
+                    if (c.tipo === 'Entrada Sodexo') entradaSodexo += c.valor;
+                    else if (c.tipo === 'Despesa') gastoSodexo += c.valor;
+                } else {
+                    if (c.tipo === 'Receita') e += c.valor;
+                    else if (c.tipo === 'Despesa') s += c.valor;
+                    else if (c.tipo === 'Investimento') inv += c.valor;
+                }
+
+                if (c.tipo === 'Despesa') {
                     catStats[c.categoria] = (catStats[c.categoria] || 0) + c.valor;
                     pagStats[c.pagamento] = (pagStats[c.pagamento] || 0) + c.valor;
-                } else if (c.tipo === 'Investimento') inv += c.valor;
+                }
             });
 
-            // Ordena por data mais recente
             todosLancamentos.sort((a,b) => b.data.localeCompare(a.data));
 
             // Atualiza KPIs
             document.getElementById('kpiEntradas').innerText = e.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpiSaidas').innerText = s.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('kpiInvest').innerText = inv.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpiSaidas').innerText = (s + gastoSodexo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('kpiSaldo').innerText = (e - s - inv).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('kpiSodexo').innerText = (entradaSodexo - gastoSodexo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             // Renderiza Tabelas
             todosLancamentos.forEach((c, idx) => {
-                const pillClass = c.tipo === 'Receita' ? 'pill-receita' : (c.tipo === 'Despesa' ? 'pill-despesa' : 'pill-invest');
+                let pillClass = 'pill-receita';
+                if(c.tipo === 'Despesa') pillClass = 'pill-despesa';
+                else if(c.tipo === 'Investimento') pillClass = 'pill-invest';
+                else if(c.tipo === 'Entrada Sodexo') pillClass = 'pill-sodexo';
+
                 const rowHTML = `<tr>
                     <td>${c.data}</td>
                     <td><span class="pill ${pillClass}">${c.tipo}</span></td>
@@ -425,7 +441,7 @@
         if(chartCat) chartCat.destroy();
         chartCat = new Chart(ctxCat, {
             type: 'doughnut',
-            data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'], borderWidth: 0 }] },
+            data: { labels: Object.keys(cats), datasets: [{ data: Object.values(cats), backgroundColor: ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#64748b'], borderWidth: 0 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }, cutout: '70%' }
         });
 
@@ -441,8 +457,8 @@
     function exportarExcel() {
         if(todosLancamentos.length === 0) return showToast("Nenhum dado para exportar!", "error");
         const rows = todosLancamentos.map(c => ({ Data: c.data, Tipo: c.tipo, Descricao: c.desc, Categoria: c.categoria, Pagamento: c.pagamento, Valor: c.valor }));
-        const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, `Omni_Finance_${getHoje()}.xlsx`);
+        const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "RN_Financeiro");
+        XLSX.writeFile(wb, `RN_Financeiro_${getHoje()}.xlsx`);
     }
 </script>
 </body>
