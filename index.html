@@ -197,10 +197,23 @@
 
   <!-- ==================== LANÇAMENTOS ==================== -->
   <div id="viewLancamentos" class="view-section">
+
+    <!-- CONFIGURAÇÃO DO SALÁRIO EDITÁVEL -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+      <div class="card-header" style="color: var(--success); margin-bottom: 10px;">⚙️ Configuração do Seu Salário Fixo</div>
+      <div style="display: flex; gap: 15px; align-items: flex-end;">
+        <div style="flex: 1;">
+          <label>Meu Salário Fixo (R$)</label>
+          <input type="text" id="cfgSalarioVal" placeholder="2.500,00" oninput="formatarMoedaInput(this)">
+        </div>
+        <button class="btn btn-success" style="width: auto; height: 48px;" onclick="salvarConfigSalario()">SALVAR VALOR</button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <span>✍️ Registrar Transação</span>
-        <button class="btn btn-salario" onclick="lancarSalarioFixo()">💰 Receber Salário Fixo (R$ 2.500,00)</button>
+        <button class="btn btn-salario" id="btnSalarioAtalho" onclick="lancarSalarioFixo()">💰 Receber Salário Fixo</button>
       </div>
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
         <div>
@@ -295,6 +308,7 @@
 
     let logado = null;
     let todosLancamentos = [];
+    let salarioFixoUsuario = 2500.00; // Valor padrão inicial
 
     function getHoje() { return new Date().toISOString().split('T')[0]; }
 
@@ -320,6 +334,32 @@
         if (typeof valorStr === 'number') return valorStr;
         let limpo = valorStr.replace(/\./g, '').replace(',', '.');
         return parseFloat(limpo) || 0;
+    }
+
+    // ====== CONFIGURAÇÃO SALÁRIO EDITÁVEL ======
+    function carregarSalarioFixoConfig() {
+        if (!logado) return;
+        const salvo = localStorage.getItem('salario_fixo_' + logado.nome);
+        if (salvo) {
+            salarioFixoUsuario = parseFloat(salvo);
+        } else {
+            salarioFixoUsuario = 2500.00;
+        }
+        
+        const valorFmt = salarioFixoUsuario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('cfgSalarioVal').value = valorFmt;
+        document.getElementById('btnSalarioAtalho').innerText = `💰 Receber Salário Fixo (R$ ${valorFmt})`;
+    }
+
+    function salvarConfigSalario() {
+        const valRaw = document.getElementById('cfgSalarioVal').value;
+        const val = converterValorParaFloat(valRaw);
+        if (val <= 0) return showToast("Digite um valor válido para o salário!", "error");
+        
+        salarioFixoUsuario = val;
+        localStorage.setItem('salario_fixo_' + logado.nome, val);
+        carregarSalarioFixoConfig();
+        showToast("Salário fixo atualizado com sucesso!");
     }
 
     // ====== AUTENTICAÇÃO ======
@@ -351,6 +391,7 @@
             logado = JSON.parse(salvo);
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('displayUser').innerText = logado.nome;
+            carregarSalarioFixoConfig();
             escutarLancamentos();
         }
     };
@@ -365,17 +406,18 @@
 
     // ====== ATALHO SALÁRIO FIXO ======
     function lancarSalarioFixo() {
+        const valorFmt = salarioFixoUsuario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const payload = { 
             tipo: 'Receita', 
             desc: 'Salário Fixo Mensal', 
-            valor: 2500.00, 
+            valor: salarioFixoUsuario, 
             data: getHoje(), 
             categoria: 'Salário', 
             pagamento: 'Dinheiro / Pix', 
             usuario: logado.nome 
         };
         rootDatabase.ref('financeiro_lancamentos').push(payload).then(() => {
-            showToast("Salário Fixo de R$ 2.500,00 registrado com sucesso!");
+            showToast(`Salário Fixo de ${valorFmt} registrado com sucesso!`);
         });
     }
 
