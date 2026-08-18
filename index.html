@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Omni Táxi Aéreo - Emissão de Termos TI</title>
 
-  <!-- Firebase RTDB compat -->
+  <!-- Firebase RTDB & Storage compat -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
+
+  <!-- html2pdf.js para exportação direta em PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -40,7 +44,7 @@
 
     #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 11000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
     .toast { background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow); animation: toastIn 0.4s forwards; display: flex; gap: 12px; align-items: center; }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0); } }
 
     /* LOGIN MODAL */
     #telaLogin { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -63,6 +67,44 @@
     .view-section.active { display: block; animation: viewFade 0.3s ease; }
     @keyframes viewFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* ABAS DE MÚLTIPLOS TERMOS */
+    .batch-tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .batch-tab {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .batch-tab:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .batch-tab.active { background: var(--brand-glow); border-color: var(--brand); color: var(--brand); }
+    .batch-tab .btn-close-tab {
+      color: var(--muted);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    .batch-tab .btn-close-tab:hover { color: var(--danger); }
+
     /* CARDS & FORMS */
     .card { background: var(--panel); backdrop-filter: blur(16px); border-radius: var(--radius); border: 1px solid var(--border); padding: 25px; margin-bottom: 24px; box-shadow: var(--shadow); }
     .card-header { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -78,6 +120,8 @@
     .btn-primary { background: var(--brand); color: #fff; border: none; }
     .btn-success { background: var(--success); color: #fff; border: none; }
     .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+    .btn-sig { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.4); color: #c084fc; }
+    .btn-sig:hover { background: #8b5cf6; color: #fff; }
 
     /* TOGGLE SWITCHES */
     .switch-container { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
@@ -92,6 +136,23 @@
     table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 10px; }
     th { text-align: left; padding: 12px 14px; color: var(--muted); font-weight: 800; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.7rem; }
     td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+
+    /* ==========================================================================
+       MODAL DE ASSINATURA DIGITAL
+    ========================================================================== */
+    #modalAssinatura {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      z-index: 10000; display: none; align-items: center; justify-content: center;
+    }
+    .sig-modal-box {
+      background: #0f172a; border: 1px solid var(--border); border-radius: 20px; padding: 30px;
+      width: 95%; max-width: 600px; box-shadow: var(--shadow); text-align: center;
+    }
+    .sig-canvas-wrap {
+      background: #ffffff; border: 2px dashed #94a3b8; border-radius: 12px;
+      margin: 15px 0; touch-action: none; position: relative;
+    }
+    #signaturePad { width: 100%; height: 220px; display: block; cursor: crosshair; }
 
     /* ==========================================================================
        ESTILO DA FOLHA A4 - DESIGN CORPORATIVO EXECUTIVO OMNI
@@ -131,15 +192,8 @@
       margin-bottom: 18px;
     }
 
-    .doc-logo-img {
-      max-height: 52px;
-      max-width: 210px;
-      object-fit: contain;
-    }
-
-    .doc-header-text {
-      text-align: right;
-    }
+    .doc-logo-img { max-height: 52px; max-width: 210px; object-fit: contain; }
+    .doc-header-text { text-align: right; }
     .doc-title { font-size: 13pt; font-weight: 900; color: #005696; text-transform: uppercase; letter-spacing: -0.2px; }
     .doc-subtitle { font-size: 9.5pt; font-weight: 700; color: #64748b; text-transform: uppercase; margin-top: 2px; }
 
@@ -185,14 +239,33 @@
     }
 
     .doc-footer { margin-top: 10px; }
-    .doc-signatures { margin-top: 22px; }
-    .sig-line { margin-top: 24px; display: flex; justify-content: space-between; }
-    .sig-field { border-top: 1.5px solid #0f172a; padding-top: 4px; font-size: 9pt; font-weight: 700; width: 48%; color: #0f172a; }
+    .doc-signatures { margin-top: 20px; }
+    .sig-line { margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    
+    .sig-field {
+      border-top: 1.5px solid #0f172a;
+      padding-top: 4px;
+      font-size: 9pt;
+      font-weight: 700;
+      width: 48%;
+      color: #0f172a;
+      position: relative;
+    }
 
-    /* MODO DE IMPRESSÃO (CTRL + P) */
+    .doc-sig-stamp {
+      height: 48px;
+      max-width: 180px;
+      display: block;
+      margin-bottom: -10px;
+      margin-left: auto;
+      margin-right: auto;
+      object-fit: contain;
+    }
+
+    /* MODO DE IMPRESSÃO */
     @media print {
       body { background: #fff !important; color: #000 !important; }
-      .sidebar, .card:not(.doc-card), .no-print, #toast-container, #telaLogin { display: none !important; }
+      .sidebar, .card:not(.doc-card), .no-print, #toast-container, #telaLogin, #modalAssinatura, .batch-tabs-bar { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; }
       .document-preview-container { background: transparent !important; padding: 0 !important; }
       .doc-page { width: 100% !important; min-height: 100vh !important; box-shadow: none !important; padding: 15mm 15mm !important; margin: 0 !important; border-top: 6px solid #005696 !important; }
@@ -202,6 +275,24 @@
 <body>
 
 <div id="toast-container"></div>
+
+<!-- MODAL DE ASSINATURA DIGITAL NA TELA -->
+<div id="modalAssinatura">
+  <div class="sig-modal-box">
+    <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text);" id="modalSigTitulo">✍️ Assinatura Digital do Colaborador</h3>
+    <p style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">Assine diretamente com o mouse, caneta ou dedo na tela abaixo.</p>
+    
+    <div class="sig-canvas-wrap">
+      <canvas id="signaturePad" width="540" height="220"></canvas>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+      <button class="btn" onclick="limparCanvas()">🧹 Limpar</button>
+      <button class="btn btn-danger" onclick="fecharModalAssinatura()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarAssinaturaDigital()">✅ Confirmar Assinatura</button>
+    </div>
+  </div>
+</div>
 
 <!-- TELA DE LOGIN -->
 <div id="telaLogin">
@@ -243,12 +334,20 @@
   <!-- ==================== GERADOR DE TERMOS ==================== -->
   <div id="viewGerador" class="view-section active">
     
+    <!-- ABAS DE MULTI-TERMOS EM LOTE -->
+    <div class="batch-tabs-bar no-print">
+      <div id="tabContainer" style="display: flex; gap: 8px;"></div>
+      <button class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem;" onclick="adicionarNovoTermoLote()">➕ Novo Termo / Máquina</button>
+    </div>
+
     <div class="card no-print">
       <div class="card-header">
-        <span>⚙️ Configuração dos Dados do Termo</span>
-        <div style="display:flex; gap: 10px;">
-          <button class="btn btn-primary" onclick="atualizarPrevia()">👁️ Atualizar</button>
-          <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir / Salvar PDF</button>
+        <span>⚙️ Dados do Termo Atual</span>
+        <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-sig" onclick="abrirModalAssinatura('colaborador')">✍️ Assinar (Colaborador)</button>
+          <button class="btn btn-sig" onclick="abrirModalAssinatura('ti')">✍️ Assinar (TI)</button>
+          <button class="btn btn-primary" onclick="exportarTermoPDF()">💾 Gerar PDF / Salvar</button>
+          <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir</button>
         </div>
       </div>
 
@@ -271,14 +370,14 @@
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 16px;">
         <div>
           <label>Tipo de Operação*</label>
-          <select id="tipoTermo" onchange="atualizarPrevia()">
+          <select id="tipoTermo" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="ENTREGA">Termo de Entrega</option>
             <option value="DEVOLUCAO">Termo de Devolução</option>
           </select>
         </div>
         <div>
           <label>Equipamento Principal*</label>
-          <select id="tipoEquipamento" onchange="alternarCamposEquipamento(); atualizarPrevia();">
+          <select id="tipoEquipamento" onchange="alternarCamposEquipamento(); salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="Notebook">Notebook</option>
             <option value="Desktop">Desktop</option>
             <option value="Monitor">Monitor (Dell)</option>
@@ -286,7 +385,7 @@
         </div>
         <div>
           <label>Data do Termo*</label>
-          <input type="date" id="dataTermo" onchange="atualizarPrevia()">
+          <input type="date" id="dataTermo" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
       </div>
 
@@ -296,7 +395,7 @@
           <label>Acompanha Carregador?</label>
           <div class="switch-container">
             <label class="switch">
-              <input type="checkbox" id="flagCarregador" checked onchange="atualizarPrevia()">
+              <input type="checkbox" id="flagCarregador" checked onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
               <span class="slider"></span>
             </label>
             <span id="txtCarregador" style="font-size: 0.85rem; font-weight: 600;">Sim</span>
@@ -306,7 +405,7 @@
           <label>Acompanha Mochila?</label>
           <div class="switch-container">
             <label class="switch">
-              <input type="checkbox" id="flagMochila" checked onchange="alternarTipoMochila(); atualizarPrevia();">
+              <input type="checkbox" id="flagMochila" checked onchange="alternarTipoMochila(); salvarEstadoTermoAtual(); atualizarPrevia();">
               <span class="slider"></span>
             </label>
             <span id="txtMochila" style="font-size: 0.85rem; font-weight: 600;">Sim</span>
@@ -314,7 +413,7 @@
         </div>
         <div id="boxMarcaMochila">
           <label>Marca / Modelo da Mochila</label>
-          <select id="marcaMochila" onchange="atualizarPrevia()">
+          <select id="marcaMochila" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="Dell">Mochila Dell</option>
             <option value="AP">Mochila AP</option>
           </select>
@@ -325,41 +424,38 @@
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; margin-bottom: 16px;">
         <div>
           <label>Modelo do Equipamento*</label>
-          <select id="modeloSelect" onchange="alternarModeloManual(); atualizarPrevia();">
-            <!-- Notebooks -->
+          <select id="modeloSelect" onchange="alternarModeloManual(); salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="Latitude 3420">Dell Latitude 3420</option>
             <option value="Latitude 3440">Dell Latitude 3440</option>
             <option value="Latitude 5420">Dell Latitude 5420</option>
             <option value="Vostro 3520">Dell Vostro 3520</option>
-            <!-- Desktops -->
             <option value="OptiPlex 3080">Dell OptiPlex 3080 (Desktop)</option>
             <option value="OptiPlex 7090">Dell OptiPlex 7090 (Desktop)</option>
-            <!-- Monitores Dell -->
             <option value="Dell P2419H (24')">Dell P2419H (24")</option>
             <option value="Dell P2422H (24')">Dell P2422H (24")</option>
             <option value="Dell E2222H (21.5')">Dell E2222H (21.5")</option>
             <option value="Dell SE2422H (24')">Dell SE2422H (24")</option>
             <option value="OUTRO">Outro Modelo (Digitar)</option>
           </select>
-          <input type="text" id="modeloManual" placeholder="Digite o modelo..." style="display: none; margin-top: 6px;" oninput="atualizarPrevia()">
+          <input type="text" id="modeloManual" placeholder="Digite o modelo..." style="display: none; margin-top: 6px;" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
           <label>Service Tag (S/N)*</label>
-          <input type="text" id="serviceTag" placeholder="Ex: 5F3Z1Z3" oninput="this.value = this.value.toUpperCase(); atualizarPrevia();">
+          <input type="text" id="serviceTag" placeholder="Ex: 5F3Z1Z3" oninput="this.value = this.value.toUpperCase(); salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
           <label>Nome do Equipamento (Hostname)*</label>
           <div style="display: flex; gap: 6px;">
-            <select id="hostPrefixo" style="width: 105px;" onchange="atualizarPrevia()">
+            <select id="hostPrefixo" style="width: 105px;" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
               <option value="OMNI-">OMNI-</option>
               <option value="ALG-">ALG-</option>
             </select>
-            <input type="text" id="hostSufixo" placeholder="000637" oninput="atualizarPrevia()">
+            <input type="text" id="hostSufixo" placeholder="000637" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
           </div>
         </div>
         <div>
           <label>Patrimônio*</label>
-          <input type="text" id="patrimonio" placeholder="Ex: 000637" oninput="atualizarPrevia()">
+          <input type="text" id="patrimonio" placeholder="Ex: 000637" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
       </div>
 
@@ -369,7 +465,7 @@
           <label>Equipamento Novo?</label>
           <div class="switch-container">
             <label class="switch">
-              <input type="checkbox" id="flagNovo" onchange="atualizarPrevia()">
+              <input type="checkbox" id="flagNovo" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
               <span class="slider"></span>
             </label>
             <span id="txtNovo" style="font-size: 0.85rem; font-weight: 600;">Não</span>
@@ -379,7 +475,7 @@
           <label>Primeiro Usuário?</label>
           <div class="switch-container">
             <label class="switch">
-              <input type="checkbox" id="flagPrimeiro" onchange="atualizarPrevia()">
+              <input type="checkbox" id="flagPrimeiro" onchange="salvarEstadoTermoAtual(); atualizarPrevia();">
               <span class="slider"></span>
             </label>
             <span id="txtPrimeiro" style="font-size: 0.85rem; font-weight: 600;">Não</span>
@@ -387,15 +483,19 @@
         </div>
       </div>
 
-      <!-- COLABORADOR, CARGO/SETOR, BASE E TI -->
-      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+      <!-- COLABORADOR, CPF, CARGO/SETOR, BASE E TI -->
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
         <div>
           <label>Nome do Colaborador*</label>
-          <input type="text" id="nomeColaborador" placeholder="Ex: Ana Paula dos Santos Cardoso" oninput="atualizarPrevia()">
+          <input type="text" id="nomeColaborador" placeholder="Ex: Ana Paula dos Santos Cardoso" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
+        </div>
+        <div>
+          <label>CPF do Colaborador</label>
+          <input type="text" id="cpfColaborador" placeholder="000.000.000-00" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
           <label>Cargo / Setor*</label>
-          <select id="cargoSelect" onchange="alternarCargoManual(); atualizarPrevia();">
+          <select id="cargoSelect" onchange="alternarCargoManual(); salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="Assistente Administrativo PCP">Assistente Administrativo PCP</option>
             <option value="Analista de Suporte TI">Analista de Suporte TI</option>
             <option value="Piloto / Co-piloto">Piloto / Co-piloto</option>
@@ -403,21 +503,21 @@
             <option value="Coordenador de Operações">Coordenador de Operações</option>
             <option value="OUTRO">Outro (Digitar Manualmente)</option>
           </select>
-          <input type="text" id="cargoManual" placeholder="Digite o Cargo/Setor..." style="display: none; margin-top: 6px;" oninput="atualizarPrevia()">
+          <input type="text" id="cargoManual" placeholder="Digite o Cargo/Setor..." style="display: none; margin-top: 6px;" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
           <label>Base Operacional*</label>
-          <select id="baseSelect" onchange="alternarBaseManual(); atualizarPrevia();">
+          <select id="baseSelect" onchange="alternarBaseManual(); salvarEstadoTermoAtual(); atualizarPrevia();">
             <option value="JPA2">JPA2 (Jacarepaguá)</option>
             <option value="RECREIO">Recreio</option>
             <option value="MACAÉ">Macaé (MEA)</option>
             <option value="FAROL">Farol de São Thomé</option>
             <option value="OUTRO">Outra Base (Digitar)</option>
           </select>
-          <input type="text" id="baseManual" placeholder="Digite a base..." style="display: none; margin-top: 6px;" oninput="atualizarPrevia()">
+          <input type="text" id="baseManual" placeholder="Digite a base..." style="display: none; margin-top: 6px;" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
-          <label>TI Responsável (Autenticado)*</label>
+          <label>TI Responsável*</label>
           <input type="text" id="nomeTI" readonly title="Usuário logado no sistema">
         </div>
       </div>
@@ -427,7 +527,10 @@
     <div class="card doc-card">
       <div class="card-header no-print">
         <span>📄 Prévia do Termo A4</span>
-        <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir / Salvar PDF</button>
+        <div style="display:flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="exportarTermoPDF()">💾 Salvar PDF</button>
+          <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir</button>
+        </div>
       </div>
 
       <div class="document-preview-container">
@@ -445,11 +548,11 @@
               </div>
             </div>
 
-            <!-- CORPO DO DOCUMENTO[cite: 1, 2] -->
+            <!-- CORPO DO DOCUMENTO -->
             <div class="doc-body">
               <p>Pelo presente instrumento, comprometo-me perante a <strong>OMNI Táxi Aéreo</strong>, na qualidade de empregado (a) ou consultor (a), a devolver em perfeitas condições de uso, a qualquer tempo que me for solicitado, os equipamentos entregues para utilização durante a minha prestação de serviços na companhia, conforme as especificações abaixo:</p>
 
-              <!-- TABELA ESTRUTURADA DE ESPECIFICAÇÕES[cite: 1, 2] -->
+              <!-- TABELA DE ESPECIFICAÇÕES -->
               <table class="specs-table">
                 <tr>
                   <td class="label-col">Equipamento</td>
@@ -484,7 +587,7 @@
               <p style="font-size: 9.3pt; line-height: 1.45;">O equipamento deve ser testado logo no ato da retirada, para averiguar eventuais problemas, que não sejam decorrentes de fabricação.</p>
               <p style="font-size: 9.3pt; line-height: 1.45;">Desta forma, declaro ter recebido da OMNI Táxi Aéreo, os equipamentos de Informática constantes que ficam sobre minha responsabilidade e que farei uso dos mesmos nos locais de trabalho para executar as tarefas referentes à minha função.</p>
 
-              <!-- DADOS DO COLABORADOR[cite: 1, 2] -->
+              <!-- DADOS DO COLABORADOR -->
               <div class="user-info-card">
                 <div><strong>Nome do Usuário:</strong> <span id="docUsuario">Ana Paula dos Santos Cardoso</span></div>
                 <div><strong>Cargo / Setor:</strong> <span id="docCargo">Assistente Administrativo PCP</span></div>
@@ -493,18 +596,26 @@
             </div>
           </div>
 
-          <!-- RODAPÉ & ASSINATURAS[cite: 1, 2] -->
+          <!-- RODAPÉ & ASSINATURAS -->
           <div class="doc-footer">
             <p id="docDataExtenso" style="margin-bottom: 20px; font-weight: 600; color: #005696;">Rio de Janeiro, 18 de agosto de 2026</p>
             
             <div class="doc-signatures">
               <div class="sig-line">
-                <div class="sig-field">Assinatura: _____________________________</div>
-                <div class="sig-field" style="width: 44%;">CPF: ________________________</div>
+                <div class="sig-field">
+                  <div id="stampSigColab" style="height: 48px; display: flex; align-items: flex-end; justify-content: center;"></div>
+                  Assinatura: <span id="txtSigColabUnderline">_____________________________</span>
+                </div>
+                <div class="sig-field" style="width: 44%;">
+                  CPF: <span id="docCPF">________________________</span>
+                </div>
               </div>
 
               <div class="sig-line">
-                <div class="sig-field" style="width: 100%;">TI: <span id="docTI">Rodrigo Cardoso</span> _________________________________________________</div>
+                <div class="sig-field" style="width: 100%;">
+                  <div id="stampSigTI" style="height: 48px; display: flex; align-items: flex-end; justify-content: center;"></div>
+                  TI: <span id="docTI">Rodrigo Cardoso</span> _________________________________________________
+                </div>
               </div>
             </div>
 
@@ -527,7 +638,7 @@
         <span>📋 Termos Emitidos & Salvos no Firebase</span>
       </div>
       <table>
-        <thead><tr><th>DATA</th><th>TIPO</th><th>COLABORADOR</th><th>CARGO/SETOR</th><th>EQUIPAMENTO</th><th>SERVICE TAG</th><th>PATRIMÔNIO</th><th>BASE</th><th>TI</th></tr></thead>
+        <thead><tr><th>DATA</th><th>TIPO</th><th>COLABORADOR</th><th>CARGO/SETOR</th><th>EQUIPAMENTO</th><th>SERVICE TAG</th><th>PATRIMÔNIO</th><th>BASE</th><th>TI</th><th>PDF</th></tr></thead>
         <tbody id="tabelaHistoricoTermos"></tbody>
       </table>
     </div>
@@ -549,6 +660,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const rootDatabase = firebase.database();
+    const rootStorage = firebase.storage ? firebase.storage() : null;
 
     let logado = null;
 
@@ -562,6 +674,224 @@
         t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
         t.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    // ====== SISTEMA DE TERMOS EM LOTE (BATCH TABS) ======
+    let termosLote = [];
+    let indiceTermoAtivo = 0;
+
+    function criarTermoVazio(index) {
+        return {
+            id: Date.now() + Math.random(),
+            nomeAba: `Máquina ${index + 1}`,
+            tipoTermo: "ENTREGA",
+            tipoEquipamento: "Notebook",
+            dataTermo: getHojeISO(),
+            flagCarregador: true,
+            flagMochila: true,
+            marcaMochila: "Dell",
+            modeloSelect: "Latitude 3420",
+            modeloManual: "",
+            serviceTag: "",
+            hostPrefixo: "OMNI-",
+            hostSufixo: "",
+            patrimonio: "",
+            flagNovo: false,
+            flagPrimeiro: false,
+            nomeColaborador: "",
+            cpfColaborador: "",
+            cargoSelect: "Assistente Administrativo PCP",
+            cargoManual: "",
+            baseSelect: "JPA2",
+            baseManual: "",
+            sigColaborador: null,
+            sigTI: null
+        };
+    }
+
+    function renderizarAbasLote() {
+        const container = document.getElementById('tabContainer');
+        container.innerHTML = "";
+        termosLote.forEach((termo, idx) => {
+            const tab = document.createElement('div');
+            tab.className = `batch-tab ${idx === indiceTermoAtivo ? 'active' : ''}`;
+            tab.innerHTML = `
+              <span onclick="selecionarAbaTermo(${idx})">🖥️ ${termo.serviceTag || termo.nomeAba}</span>
+              ${termosLote.length > 1 ? `<span class="btn-close-tab" onclick="removerAbaTermo(${idx})">×</span>` : ''}
+            `;
+            container.appendChild(tab);
+        });
+    }
+
+    function adicionarNovoTermoLote() {
+        salvarEstadoTermoAtual();
+        const novo = criarTermoVazio(termosLote.length);
+        // Herda dados do colaborador para agilizar entregas múltiplas ao mesmo usuário
+        if(termosLote.length > 0) {
+            const anterior = termosLote[indiceTermoAtivo];
+            novo.nomeColaborador = anterior.nomeColaborador;
+            novo.cpfColaborador = anterior.cpfColaborador;
+            novo.cargoSelect = anterior.cargoSelect;
+            novo.cargoManual = anterior.cargoManual;
+            novo.baseSelect = anterior.baseSelect;
+            novo.baseManual = anterior.baseManual;
+            novo.tipoTermo = anterior.tipoTermo;
+        }
+        termosLote.push(novo);
+        indiceTermoAtivo = termosLote.length - 1;
+        carregarEstadoTermoAtual();
+        renderizarAbasLote();
+        showToast("Nova máquina adicionada ao lote!");
+    }
+
+    function removerAbaTermo(idx) {
+        if(termosLote.length <= 1) return;
+        termosLote.splice(idx, 1);
+        if (indiceTermoAtivo >= termosLote.length) indiceTermoAtivo = termosLote.length - 1;
+        carregarEstadoTermoAtual();
+        renderizarAbasLote();
+    }
+
+    function selecionarAbaTermo(idx) {
+        salvarEstadoTermoAtual();
+        indiceTermoAtivo = idx;
+        carregarEstadoTermoAtual();
+        renderizarAbasLote();
+    }
+
+    function salvarEstadoTermoAtual() {
+        if(!termosLote[indiceTermoAtivo]) return;
+        const t = termosLote[indiceTermoAtivo];
+        t.tipoTermo = document.getElementById('tipoTermo').value;
+        t.tipoEquipamento = document.getElementById('tipoEquipamento').value;
+        t.dataTermo = document.getElementById('dataTermo').value;
+        t.flagCarregador = document.getElementById('flagCarregador').checked;
+        t.flagMochila = document.getElementById('flagMochila').checked;
+        t.marcaMochila = document.getElementById('marcaMochila').value;
+        t.modeloSelect = document.getElementById('modeloSelect').value;
+        t.modeloManual = document.getElementById('modeloManual').value;
+        t.serviceTag = document.getElementById('serviceTag').value;
+        t.hostPrefixo = document.getElementById('hostPrefixo').value;
+        t.hostSufixo = document.getElementById('hostSufixo').value;
+        t.patrimonio = document.getElementById('patrimonio').value;
+        t.flagNovo = document.getElementById('flagNovo').checked;
+        t.flagPrimeiro = document.getElementById('flagPrimeiro').checked;
+        t.nomeColaborador = document.getElementById('nomeColaborador').value;
+        t.cpfColaborador = document.getElementById('cpfColaborador').value;
+        t.cargoSelect = document.getElementById('cargoSelect').value;
+        t.cargoManual = document.getElementById('cargoManual').value;
+        t.baseSelect = document.getElementById('baseSelect').value;
+        t.baseManual = document.getElementById('baseManual').value;
+        renderizarAbasLote();
+    }
+
+    function carregarEstadoTermoAtual() {
+        const t = termosLote[indiceTermoAtivo];
+        if(!t) return;
+        document.getElementById('tipoTermo').value = t.tipoTermo;
+        document.getElementById('tipoEquipamento').value = t.tipoEquipamento;
+        document.getElementById('dataTermo').value = t.dataTermo;
+        document.getElementById('flagCarregador').checked = t.flagCarregador;
+        document.getElementById('flagMochila').checked = t.flagMochila;
+        document.getElementById('marcaMochila').value = t.marcaMochila;
+        document.getElementById('modeloSelect').value = t.modeloSelect;
+        document.getElementById('modeloManual').value = t.modeloManual;
+        document.getElementById('serviceTag').value = t.serviceTag;
+        document.getElementById('hostPrefixo').value = t.hostPrefixo;
+        document.getElementById('hostSufixo').value = t.hostSufixo;
+        document.getElementById('patrimonio').value = t.patrimonio;
+        document.getElementById('flagNovo').checked = t.flagNovo;
+        document.getElementById('flagPrimeiro').checked = t.flagPrimeiro;
+        document.getElementById('nomeColaborador').value = t.nomeColaborador;
+        document.getElementById('cpfColaborador').value = t.cpfColaborador;
+        document.getElementById('cargoSelect').value = t.cargoSelect;
+        document.getElementById('cargoManual').value = t.cargoManual;
+        document.getElementById('baseSelect').value = t.baseSelect;
+        document.getElementById('baseManual').value = t.baseManual;
+
+        alternarCamposEquipamento();
+        alternarTipoMochila();
+        alternarModeloManual();
+        alternarCargoManual();
+        alternarBaseManual();
+        atualizarPrevia();
+    }
+
+    // ====== ASSINATURA DIGITAL NO CANVAS ======
+    let canvas, ctx, desenhando = false;
+    let alvoAssinaturaAtual = 'colaborador'; // 'colaborador' ou 'ti'
+
+    function initCanvas() {
+        canvas = document.getElementById('signaturePad');
+        ctx = canvas.getContext('2d');
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            desenhando = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            if(e.cancelable) e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!desenhando) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            if(e.cancelable) e.preventDefault();
+        }
+
+        function endDraw() { desenhando = false; }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', endDraw);
+
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', endDraw);
+    }
+
+    function abrirModalAssinatura(alvo) {
+        alvoAssinaturaAtual = alvo;
+        document.getElementById('modalSigTitulo').innerText = alvo === 'colaborador' 
+            ? "✍️ Assinatura Digital do Colaborador" 
+            : "✍️ Assinatura Digital do Analista de TI";
+        limparCanvas();
+        document.getElementById('modalAssinatura').style.display = 'flex';
+    }
+
+    function fecharModalAssinatura() {
+        document.getElementById('modalAssinatura').style.display = 'none';
+    }
+
+    function limparCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function salvarAssinaturaDigital() {
+        const dataUrl = canvas.toDataURL("image/png");
+        const t = termosLote[indiceTermoAtivo];
+
+        if (alvoAssinaturaAtual === 'colaborador') {
+            t.sigColaborador = dataUrl;
+        } else {
+            t.sigTI = dataUrl;
+        }
+
+        fecharModalAssinatura();
+        atualizarPrevia();
+        showToast("Assinatura digital capturada!");
     }
 
     // ====== GERENCIAMENTO DA LOGO PNG ======
@@ -621,7 +951,7 @@
         if(v === 'historico') carregarHistorico();
     }
 
-    // ====== CONTROLADORES DE CAMPOS DINÂMICOS ======
+    // ====== CONTROLADORES DE CAMPOS ======
     function alternarCamposEquipamento() {
         const tipo = document.getElementById('tipoEquipamento').value;
         const boxNotebook = document.getElementById('boxNotebook');
@@ -629,7 +959,6 @@
 
         boxNotebook.style.display = tipo === 'Notebook' ? 'grid' : 'none';
 
-        // Auto-seleciona um modelo coerente
         if (tipo === 'Monitor') {
             selModelo.value = "Dell P2419H (24')";
         } else if (tipo === 'Desktop') {
@@ -674,125 +1003,120 @@
         return `${dia}/${mes}/${ano}`;
     }
 
-    // ====== RENDERIZAÇÃO EM TEMPO REAL NA FOLHA ======
+    // ====== RENDERIZAÇÃO EM TEMPO REAL ======
     function atualizarPrevia() {
-        const tipoTermo = document.getElementById('tipoTermo').value;
-        const tipoEquip = document.getElementById('tipoEquipamento').value;
-        const dataVal = document.getElementById('dataTermo').value || getHojeISO();
+        const t = termosLote[indiceTermoAtivo];
+        if (!t) return;
 
-        // Modelo
-        const modeloSel = document.getElementById('modeloSelect').value;
-        const modeloFinal = modeloSel === 'OUTRO' ? (document.getElementById('modeloManual').value || '---') : modeloSel;
-
-        // Service Tag, Hostname e Patrimônio
-        const st = document.getElementById('serviceTag').value || '---';
-        const prefixo = document.getElementById('hostPrefixo').value;
-        const sufixo = document.getElementById('hostSufixo').value || '000000';
-        const hostFinal = prefixo + sufixo;
-        const pat = document.getElementById('patrimonio').value || '---';
-
-        // Flags
-        const temCarregador = document.getElementById('flagCarregador').checked;
-        document.getElementById('txtCarregador').innerText = temCarregador ? 'Sim' : 'Não';
-
-        const temMochila = document.getElementById('flagMochila').checked;
-        const marcaMochila = document.getElementById('marcaMochila').value;
-
-        const isNovo = document.getElementById('flagNovo').checked;
-        document.getElementById('txtNovo').innerText = isNovo ? 'Sim' : 'Não';
-
-        const isPrimeiro = document.getElementById('flagPrimeiro').checked;
-        document.getElementById('txtPrimeiro').innerText = isPrimeiro ? 'Sim' : 'Não';
-
-        // Colaborador, Cargo e Base
-        const nomeColab = document.getElementById('nomeColaborador').value || 'Nome do Colaborador';
-        
-        const cargoSel = document.getElementById('cargoSelect').value;
-        const cargoFinal = cargoSel === 'OUTRO' ? (document.getElementById('cargoManual').value || 'Cargo / Setor') : cargoSel;
-
-        const baseSel = document.getElementById('baseSelect').value;
-        const baseFinal = baseSel === 'OUTRO' ? (document.getElementById('baseManual').value || 'Base') : baseSel;
-
+        const modeloFinal = t.modeloSelect === 'OUTRO' ? (t.modeloManual || '---') : t.modeloSelect;
+        const hostFinal = t.hostPrefixo + (t.hostSufixo || '000000');
+        const cargoFinal = t.cargoSelect === 'OUTRO' ? (t.cargoManual || 'Cargo / Setor') : t.cargoSelect;
+        const baseFinal = t.baseSelect === 'OUTRO' ? (t.baseManual || 'Base') : t.baseSelect;
         const nomeTI = logado ? logado.nome : (document.getElementById('nomeTI').value || 'Analista TI');
 
-        // Título Oficial[cite: 1, 2]
-        document.getElementById('docTitulo').innerText = tipoTermo === 'ENTREGA' 
+        document.getElementById('docTitulo').innerText = t.tipoTermo === 'ENTREGA' 
             ? "TERMO DE RESPONSABILIDADE" 
             : "TERMO DE RESPONSABILIDADE (Devolução de equipamento)";
 
-        // Montagem do Equipamento[cite: 1, 2]
-        let equipTexto = tipoEquip;
-        if (tipoEquip === 'Notebook') {
-            if (temCarregador) equipTexto += " + Carregador";
-            if (temMochila) equipTexto += ` + Mochila (${marcaMochila})`;
-        } else if (tipoEquip === 'Monitor') {
+        let equipTexto = t.tipoEquipamento;
+        if (t.tipoEquipamento === 'Notebook') {
+            if (t.flagCarregador) equipTexto += " + Carregador";
+            if (t.flagMochila) equipTexto += ` + Mochila (${t.marcaMochila})`;
+        } else if (t.tipoEquipamento === 'Monitor') {
             equipTexto = "Monitor Dell";
         }
         document.getElementById('docEquipamentoTexto').innerText = equipTexto;
 
-        // Injeção dos dados no Termo[cite: 1, 2]
         document.getElementById('docModelo').innerText = modeloFinal;
-        document.getElementById('docServiceTag').innerText = st;
+        document.getElementById('docServiceTag').innerText = t.serviceTag || '---';
         document.getElementById('docHostname').innerText = hostFinal;
-        document.getElementById('docPatrimonio').innerText = pat;
+        document.getElementById('docPatrimonio').innerText = t.patrimonio || '---';
 
-        document.getElementById('docNovoStatus').innerHTML = isNovo ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
-        document.getElementById('docPrimeiroStatus').innerHTML = isPrimeiro ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
+        document.getElementById('docNovoStatus').innerHTML = t.flagNovo ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
+        document.getElementById('docPrimeiroStatus').innerHTML = t.flagPrimeiro ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
 
-        document.getElementById('docDataExtenso').innerText = `Rio de Janeiro, ${formatarDataExtenso(dataVal)}`;
-        document.getElementById('docDataRodape').innerText = formatarDataPadrao(dataVal);
-        document.getElementById('docUsuario').innerText = nomeColab;
+        document.getElementById('docDataExtenso').innerText = `Rio de Janeiro, ${formatarDataExtenso(t.dataTermo)}`;
+        document.getElementById('docDataRodape').innerText = formatarDataPadrao(t.dataTermo);
+        document.getElementById('docUsuario').innerText = t.nomeColaborador || 'Nome do Colaborador';
+        document.getElementById('docCPF').innerText = t.cpfColaborador || '________________________';
         document.getElementById('docCargo').innerText = cargoFinal;
         document.getElementById('docBase').innerText = baseFinal;
         document.getElementById('docTI').innerText = nomeTI;
+
+        // Injeta as assinaturas digitais capturadas
+        const stampColab = document.getElementById('stampSigColab');
+        if (t.sigColaborador) {
+            stampColab.innerHTML = `<img src="${t.sigColaborador}" class="doc-sig-stamp">`;
+        } else {
+            stampColab.innerHTML = "";
+        }
+
+        const stampTI = document.getElementById('stampSigTI');
+        if (t.sigTI) {
+            stampTI.innerHTML = `<img src="${t.sigTI}" class="doc-sig-stamp">`;
+        } else {
+            stampTI.innerHTML = "";
+        }
     }
 
-    // ====== IMPRESSÃO & PERSISTÊNCIA ======
-    function imprimirTermo() {
-        const dataVal = document.getElementById('dataTermo').value || getHojeISO();
-        const nomeColab = document.getElementById('nomeColaborador').value.trim();
-        const st = document.getElementById('serviceTag').value.trim();
+    // ====== EXPORTAÇÃO EM PDF E SALVAMENTO ======
+    async function exportarTermoPDF() {
+        salvarEstadoTermoAtual();
+        const t = termosLote[indiceTermoAtivo];
 
-        if (!nomeColab || !st) {
-            showToast("Preencha ao menos o Colaborador e a Service Tag antes de emitir!", "error");
+        if (!t.nomeColaborador || !t.serviceTag) {
+            showToast("Preencha o Colaborador e a Service Tag antes de gerar o PDF!", "error");
             return;
         }
 
-        const modeloSel = document.getElementById('modeloSelect').value;
-        const modeloFinal = modeloSel === 'OUTRO' ? document.getElementById('modeloManual').value : modeloSel;
+        showToast("Gerando PDF do termo...", "success");
 
-        const cargoSel = document.getElementById('cargoSelect').value;
-        const cargoFinal = cargoSel === 'OUTRO' ? document.getElementById('cargoManual').value : cargoSel;
+        const elemento = document.getElementById('folhaTermo');
+        const opt = {
+            margin: 0,
+            filename: `Termo_${t.tipoTermo}_${t.serviceTag}_${t.nomeColaborador.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-        const baseSel = document.getElementById('baseSelect').value;
-        const baseFinal = baseSel === 'OUTRO' ? document.getElementById('baseManual').value : baseSel;
+        const pdfBlob = await html2pdf().from(elemento).set(opt).output('blob');
+        html2pdf().from(elemento).set(opt).save();
 
+        // Salva metadados no Firebase Realtime Database
         const payload = {
-            tipoTermo: document.getElementById('tipoTermo').value,
+            tipoTermo: t.tipoTermo,
             tipoEquipamento: document.getElementById('docEquipamentoTexto').innerText,
-            modelo: modeloFinal,
-            serviceTag: st,
+            modelo: t.modeloSelect === 'OUTRO' ? t.modeloManual : t.modeloSelect,
+            serviceTag: t.serviceTag,
             hostname: document.getElementById('docHostname').innerText,
-            patrimonio: document.getElementById('patrimonio').value,
-            isNovo: document.getElementById('flagNovo').checked ? 'Sim' : 'Não',
-            isPrimeiroUser: document.getElementById('flagPrimeiro').checked ? 'Sim' : 'Não',
-            data: dataVal,
-            nomeColaborador: nomeColab,
-            cargoSetor: cargoFinal,
-            base: baseFinal,
+            patrimonio: t.patrimonio,
+            isNovo: t.flagNovo ? 'Sim' : 'Não',
+            isPrimeiroUser: t.flagPrimeiro ? 'Sim' : 'Não',
+            data: t.dataTermo,
+            nomeColaborador: t.nomeColaborador,
+            cpfColaborador: t.cpfColaborador,
+            cargoSetor: t.cargoSelect === 'OUTRO' ? t.cargoManual : t.cargoSelect,
+            base: t.baseSelect === 'OUTRO' ? t.baseManual : t.baseSelect,
             tiResponsavel: logado ? logado.nome : 'Analista TI',
+            temAssinaturaColab: !!t.sigColaborador,
+            temAssinaturaTI: !!t.sigTI,
             criadoEm: new Date().toISOString()
         };
 
         rootDatabase.ref('termos_responsabilidade').push(payload).then(() => {
-            showToast("Termo salvo no Firebase!");
-            window.print();
+            showToast("Termo e assinaturas salvos com sucesso no Firebase!");
         });
+    }
+
+    function imprimirTermo() {
+        salvarEstadoTermoAtual();
+        window.print();
     }
 
     function carregarHistorico() {
         const tb = document.getElementById('tabelaHistoricoTermos');
-        tb.innerHTML = "<tr><td colspan='9' style='text-align:center; color:var(--muted);'>Carregando termos...</td></tr>";
+        tb.innerHTML = "<tr><td colspan='10' style='text-align:center; color:var(--muted);'>Carregando termos...</td></tr>";
 
         rootDatabase.ref('termos_responsabilidade').once('value', snap => {
             tb.innerHTML = "";
@@ -800,7 +1124,7 @@
             snap.forEach(item => lista.push(item.val()));
 
             if (lista.length === 0) {
-                tb.innerHTML = "<tr><td colspan='9' style='text-align:center; color:var(--muted);'>Nenhum termo gerado ainda.</td></tr>";
+                tb.innerHTML = "<tr><td colspan='10' style='text-align:center; color:var(--muted);'>Nenhum termo gerado ainda.</td></tr>";
                 return;
             }
 
@@ -817,6 +1141,7 @@
                     <td>${t.patrimonio}</td>
                     <td>${t.base}</td>
                     <td>${t.tiResponsavel}</td>
+                    <td>${t.temAssinaturaColab ? '✍️ Assinado' : '📄 Sem Assinatura'}</td>
                 </tr>`;
             });
         });
@@ -834,11 +1159,14 @@
             document.getElementById('telaLogin').style.display = 'flex';
         }
 
-        document.getElementById('dataTermo').value = getHojeISO();
         inicializarLogo();
-        alternarCamposEquipamento();
-        alternarTipoMochila();
-        atualizarPrevia();
+        initCanvas();
+        
+        // Inicia com o primeiro termo no lote
+        termosLote.push(criarTermoVazio(0));
+        indiceTermoAtivo = 0;
+        carregarEstadoTermoAtual();
+        renderizarAbasLote();
     };
 </script>
 </body>
