@@ -8,7 +8,6 @@
   <!-- Firebase RTDB & Storage compat -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
 
   <!-- html2pdf.js para exportação direta em PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -138,23 +137,6 @@
     td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
 
     /* ==========================================================================
-       MODAL DE ASSINATURA DIGITAL
-    ========================================================================== */
-    #modalAssinatura {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-      z-index: 10000; display: none; align-items: center; justify-content: center;
-    }
-    .sig-modal-box {
-      background: #0f172a; border: 1px solid var(--border); border-radius: 20px; padding: 30px;
-      width: 95%; max-width: 600px; box-shadow: var(--shadow); text-align: center;
-    }
-    .sig-canvas-wrap {
-      background: #ffffff; border: 2px dashed #94a3b8; border-radius: 12px;
-      margin: 15px 0; touch-action: none; position: relative;
-    }
-    #signaturePad { width: 100%; height: 220px; display: block; cursor: crosshair; }
-
-    /* ==========================================================================
        ESTILO DA FOLHA A4 - DESIGN CORPORATIVO EXECUTIVO OMNI
     ========================================================================== */
     .document-preview-container {
@@ -239,15 +221,16 @@
     }
 
     .doc-footer { margin-top: 10px; }
-    .doc-signatures { margin-top: 20px; }
-    .sig-line { margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .doc-signatures { margin-top: 24px; }
+    
+    .sig-line { margin-top: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
     
     .sig-field {
       border-top: 1.5px solid #0f172a;
       padding-top: 4px;
       font-size: 9pt;
       font-weight: 700;
-      width: 48%;
+      width: 100%;
       color: #0f172a;
       position: relative;
     }
@@ -265,7 +248,7 @@
     /* MODO DE IMPRESSÃO */
     @media print {
       body { background: #fff !important; color: #000 !important; }
-      .sidebar, .card:not(.doc-card), .no-print, #toast-container, #telaLogin, #modalAssinatura, .batch-tabs-bar { display: none !important; }
+      .sidebar, .card:not(.doc-card), .no-print, #toast-container, #telaLogin, .batch-tabs-bar { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; }
       .document-preview-container { background: transparent !important; padding: 0 !important; }
       .doc-page { width: 100% !important; min-height: 100vh !important; box-shadow: none !important; padding: 15mm 15mm !important; margin: 0 !important; border-top: 6px solid #005696 !important; }
@@ -275,24 +258,6 @@
 <body>
 
 <div id="toast-container"></div>
-
-<!-- MODAL DE ASSINATURA DIGITAL NA TELA -->
-<div id="modalAssinatura">
-  <div class="sig-modal-box">
-    <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text);" id="modalSigTitulo">✍️ Assinatura Digital do Colaborador</h3>
-    <p style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">Assine diretamente com o mouse, caneta ou dedo na tela abaixo.</p>
-    
-    <div class="sig-canvas-wrap">
-      <canvas id="signaturePad" width="540" height="220"></canvas>
-    </div>
-
-    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
-      <button class="btn" onclick="limparCanvas()">🧹 Limpar</button>
-      <button class="btn btn-danger" onclick="fecharModalAssinatura()">Cancelar</button>
-      <button class="btn btn-success" onclick="salvarAssinaturaDigital()">✅ Confirmar Assinatura</button>
-    </div>
-  </div>
-</div>
 
 <!-- TELA DE LOGIN -->
 <div id="telaLogin">
@@ -317,6 +282,7 @@
     <div class="sidebar-title">OPERAÇÃO DE TERMOS</div>
     <div class="nav-item active" onclick="switchView('gerador', event)">📄 Gerar Termo</div>
     <div class="nav-item" onclick="switchView('historico', event)">📋 Histórico de Emissões</div>
+    <div class="nav-item" id="navConfig" onclick="switchView('config', event)">⚙️ Configurações Gerais</div>
   </div>
 
   <div style="padding-top: 20px; border-top: 1px solid var(--border);">
@@ -344,25 +310,11 @@
       <div class="card-header">
         <span>⚙️ Dados do Termo Atual</span>
         <div style="display:flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-sig" onclick="abrirModalAssinatura('colaborador')">✍️ Assinar (Colaborador)</button>
-          <button class="btn btn-sig" onclick="abrirModalAssinatura('ti')">✍️ Assinar (TI)</button>
+          <input type="file" id="uploadSigTI" accept="image/png, image/jpeg" style="display: none;" onchange="carregarAssinaturaTI(event)">
+          <button class="btn btn-sig" onclick="document.getElementById('uploadSigTI').click()">📎 Anexar Assinatura TI</button>
+          <button class="btn" style="color: var(--danger);" onclick="removerAssinaturaTI()">🗑️ Remover Assinatura</button>
           <button class="btn btn-primary" onclick="exportarTermoPDF()">💾 Gerar PDF / Salvar</button>
           <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir</button>
-        </div>
-      </div>
-
-      <!-- PERSONALIZAÇÃO DE LOGO PNG -->
-      <div style="background: rgba(2, 132, 199, 0.05); padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(2, 132, 199, 0.2); margin-bottom: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <span style="font-size: 0.82rem; font-weight: 700; color: var(--brand);">🖼️ Logo da Omni na Folha</span>
-            <p style="font-size: 0.75rem; color: var(--muted); margin-top: 2px;">Carregue o arquivo PNG da logo ou utilize a logo corporativa padrão.</p>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <input type="file" id="uploadLogoPng" accept="image/png, image/jpeg" style="display: none;" onchange="carregarLogoCustomizada(event)">
-            <button class="btn" style="padding: 6px 14px; font-size: 0.78rem;" onclick="document.getElementById('uploadLogoPng').click()">📁 Escolher PNG</button>
-            <button class="btn" style="padding: 6px 14px; font-size: 0.78rem;" onclick="restaurarLogoPadrao()">🔄 Logo Padrão</button>
-          </div>
         </div>
       </div>
 
@@ -483,15 +435,11 @@
         </div>
       </div>
 
-      <!-- COLABORADOR, CPF, CARGO/SETOR, BASE E TI -->
-      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+      <!-- COLABORADOR, CARGO/SETOR, BASE E TI -->
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
         <div>
           <label>Nome do Colaborador*</label>
           <input type="text" id="nomeColaborador" placeholder="Ex: Ana Paula dos Santos Cardoso" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
-        </div>
-        <div>
-          <label>CPF do Colaborador</label>
-          <input type="text" id="cpfColaborador" placeholder="000.000.000-00" oninput="salvarEstadoTermoAtual(); atualizarPrevia();">
         </div>
         <div>
           <label>Cargo / Setor*</label>
@@ -537,7 +485,7 @@
         <div class="doc-page" id="folhaTermo">
           
           <div>
-            <!-- CABEÇALHO OFICIAL COM LOGO PNG -->
+            <!-- CABEÇALHO OFICIAL COM LOGO FIXA DO BANCO -->
             <div class="doc-header">
               <div>
                 <img id="docLogoImg" class="doc-logo-img" alt="Omni Táxi Aéreo">
@@ -596,24 +544,14 @@
             </div>
           </div>
 
-          <!-- RODAPÉ & ASSINATURAS -->
+          <!-- RODAPÉ COM APENAS ASSINATURA DO TI -->
           <div class="doc-footer">
             <p id="docDataExtenso" style="margin-bottom: 20px; font-weight: 600; color: #005696;">Rio de Janeiro, 18 de agosto de 2026</p>
             
             <div class="doc-signatures">
               <div class="sig-line">
                 <div class="sig-field">
-                  <div id="stampSigColab" style="height: 48px; display: flex; align-items: flex-end; justify-content: center;"></div>
-                  Assinatura: <span id="txtSigColabUnderline">_____________________________</span>
-                </div>
-                <div class="sig-field" style="width: 44%;">
-                  CPF: <span id="docCPF">________________________</span>
-                </div>
-              </div>
-
-              <div class="sig-line">
-                <div class="sig-field" style="width: 100%;">
-                  <div id="stampSigTI" style="height: 48px; display: flex; align-items: flex-end; justify-content: center;"></div>
+                  <div id="stampSigTI" style="height: 48px; display: flex; align-items: flex-end; justify-content: flex-start; padding-left: 20px;"></div>
                   TI: <span id="docTI">Rodrigo Cardoso</span> _________________________________________________
                 </div>
               </div>
@@ -631,6 +569,29 @@
     </div>
   </div>
 
+  <!-- ==================== CONFIGURAÇÃO GERAL (LOGO FIXA) ==================== -->
+  <div id="viewConfig" class="view-section">
+    <div class="card">
+      <div class="card-header">
+        <span>⚙️ Configuração Fixa da Logo Oficial</span>
+      </div>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 20px;">
+        A logo salva aqui será aplicada no banco de dados como a <strong>logo oficial padrão</strong> do sistema. Todos os usuários visualizarão a mesma logo automaticamente sem precisar reconfigurar.
+      </p>
+
+      <div style="background: rgba(0,0,0,0.2); padding: 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 30px;">
+        <div style="background: #ffffff; padding: 15px 25px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          <img id="previewLogoConfig" style="max-height: 60px; max-width: 220px; object-fit: contain;">
+        </div>
+        <div>
+          <input type="file" id="uploadLogoAdm" accept="image/png, image/jpeg" style="display: none;" onchange="salvarLogoFixaBanco(event)">
+          <button class="btn btn-primary" onclick="document.getElementById('uploadLogoAdm').click()">📁 Fazer Upload de Nova Logo PNG</button>
+          <button class="btn" style="margin-left: 8px;" onclick="restaurarLogoPadraoBanco()">🔄 Restaurar Logo Padrão</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== HISTÓRICO DE TERMOS ==================== -->
   <div id="viewHistorico" class="view-section">
     <div class="card">
@@ -638,7 +599,7 @@
         <span>📋 Termos Emitidos & Salvos no Firebase</span>
       </div>
       <table>
-        <thead><tr><th>DATA</th><th>TIPO</th><th>COLABORADOR</th><th>CARGO/SETOR</th><th>EQUIPAMENTO</th><th>SERVICE TAG</th><th>PATRIMÔNIO</th><th>BASE</th><th>TI</th><th>PDF</th></tr></thead>
+        <thead><tr><th>DATA</th><th>TIPO</th><th>COLABORADOR</th><th>CARGO/SETOR</th><th>EQUIPAMENTO</th><th>SERVICE TAG</th><th>PATRIMÔNIO</th><th>BASE</th><th>TI</th><th>STATUS</th></tr></thead>
         <tbody id="tabelaHistoricoTermos"></tbody>
       </table>
     </div>
@@ -660,11 +621,10 @@
 
     firebase.initializeApp(firebaseConfig);
     const rootDatabase = firebase.database();
-    const rootStorage = firebase.storage ? firebase.storage() : null;
 
     let logado = null;
 
-    // LOGO VETORIZADA SVG BASE64 (PADRÃO OMNI TÁXI AÉREO)
+    // LOGO VETORIZADA OFICIAL PADRÃO OMNI TÁXI AÉREO
     const LOGO_PADRAO_OMNI = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 90'><path d='M10 75L50 8L74 8L34 75H10Z' fill='%23005696'/><path d='M38 75L78 8L102 8L62 75H38Z' fill='%230284c7'/><path d='M66 75L106 8L130 8L90 75H66Z' fill='%2364748b'/><text x='140' y='58' font-family='Arial Black, sans-serif' font-size='50' font-weight='900' fill='%23005696' letter-spacing='-2'>omni</text><text x='144' y='78' font-family='Arial, sans-serif' font-size='17' font-weight='bold' fill='%230284c7' letter-spacing='1'>táxi aéreo</text></svg>";
 
     function getHojeISO() { return new Date().toISOString().split('T')[0]; }
@@ -674,6 +634,37 @@
         t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
         t.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    // ====== SINCRONIZAÇÃO DA LOGO FIXA DIRETO NO FIREBASE ======
+    function escutarLogoFixaFirebase() {
+        rootDatabase.ref('configuracoes/logoOficial').on('value', snap => {
+            const logoSalva = snap.val();
+            const logoFinal = logoSalva || LOGO_PADRAO_OMNI;
+            document.getElementById('docLogoImg').src = logoFinal;
+            const preview = document.getElementById('previewLogoConfig');
+            if (preview) preview.src = logoFinal;
+        });
+    }
+
+    function salvarLogoFixaBanco(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            rootDatabase.ref('configuracoes/logoOficial').set(dataUrl).then(() => {
+                showToast("Logo oficial salva e fixada no banco para todos os usuários!");
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function restaurarLogoPadraoBanco() {
+        rootDatabase.ref('configuracoes/logoOficial').set(LOGO_PADRAO_OMNI).then(() => {
+            showToast("Logo padrão restaurada no banco!");
+        });
     }
 
     // ====== SISTEMA DE TERMOS EM LOTE (BATCH TABS) ======
@@ -699,12 +690,10 @@
             flagNovo: false,
             flagPrimeiro: false,
             nomeColaborador: "",
-            cpfColaborador: "",
             cargoSelect: "Assistente Administrativo PCP",
             cargoManual: "",
             baseSelect: "JPA2",
             baseManual: "",
-            sigColaborador: null,
             sigTI: null
         };
     }
@@ -726,16 +715,15 @@
     function adicionarNovoTermoLote() {
         salvarEstadoTermoAtual();
         const novo = criarTermoVazio(termosLote.length);
-        // Herda dados do colaborador para agilizar entregas múltiplas ao mesmo usuário
         if(termosLote.length > 0) {
             const anterior = termosLote[indiceTermoAtivo];
             novo.nomeColaborador = anterior.nomeColaborador;
-            novo.cpfColaborador = anterior.cpfColaborador;
             novo.cargoSelect = anterior.cargoSelect;
             novo.cargoManual = anterior.cargoManual;
             novo.baseSelect = anterior.baseSelect;
             novo.baseManual = anterior.baseManual;
             novo.tipoTermo = anterior.tipoTermo;
+            novo.sigTI = anterior.sigTI;
         }
         termosLote.push(novo);
         indiceTermoAtivo = termosLote.length - 1;
@@ -777,7 +765,6 @@
         t.flagNovo = document.getElementById('flagNovo').checked;
         t.flagPrimeiro = document.getElementById('flagPrimeiro').checked;
         t.nomeColaborador = document.getElementById('nomeColaborador').value;
-        t.cpfColaborador = document.getElementById('cpfColaborador').value;
         t.cargoSelect = document.getElementById('cargoSelect').value;
         t.cargoManual = document.getElementById('cargoManual').value;
         t.baseSelect = document.getElementById('baseSelect').value;
@@ -803,7 +790,6 @@
         document.getElementById('flagNovo').checked = t.flagNovo;
         document.getElementById('flagPrimeiro').checked = t.flagPrimeiro;
         document.getElementById('nomeColaborador').value = t.nomeColaborador;
-        document.getElementById('cpfColaborador').value = t.cpfColaborador;
         document.getElementById('cargoSelect').value = t.cargoSelect;
         document.getElementById('cargoManual').value = t.cargoManual;
         document.getElementById('baseSelect').value = t.baseSelect;
@@ -817,110 +803,30 @@
         atualizarPrevia();
     }
 
-    // ====== ASSINATURA DIGITAL NO CANVAS ======
-    let canvas, ctx, desenhando = false;
-    let alvoAssinaturaAtual = 'colaborador'; // 'colaborador' ou 'ti'
-
-    function initCanvas() {
-        canvas = document.getElementById('signaturePad');
-        ctx = canvas.getContext('2d');
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = "round";
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        function startDraw(e) {
-            desenhando = true;
-            const pos = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-            if(e.cancelable) e.preventDefault();
-        }
-
-        function draw(e) {
-            if (!desenhando) return;
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-            if(e.cancelable) e.preventDefault();
-        }
-
-        function endDraw() { desenhando = false; }
-
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', endDraw);
-
-        canvas.addEventListener('touchstart', startDraw, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        window.addEventListener('touchend', endDraw);
-    }
-
-    function abrirModalAssinatura(alvo) {
-        alvoAssinaturaAtual = alvo;
-        document.getElementById('modalSigTitulo').innerText = alvo === 'colaborador' 
-            ? "✍️ Assinatura Digital do Colaborador" 
-            : "✍️ Assinatura Digital do Analista de TI";
-        limparCanvas();
-        document.getElementById('modalAssinatura').style.display = 'flex';
-    }
-
-    function fecharModalAssinatura() {
-        document.getElementById('modalAssinatura').style.display = 'none';
-    }
-
-    function limparCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function salvarAssinaturaDigital() {
-        const dataUrl = canvas.toDataURL("image/png");
-        const t = termosLote[indiceTermoAtivo];
-
-        if (alvoAssinaturaAtual === 'colaborador') {
-            t.sigColaborador = dataUrl;
-        } else {
-            t.sigTI = dataUrl;
-        }
-
-        fecharModalAssinatura();
-        atualizarPrevia();
-        showToast("Assinatura digital capturada!");
-    }
-
-    // ====== GERENCIAMENTO DA LOGO PNG ======
-    function carregarLogoCustomizada(event) {
+    // ====== ANEXAR ASSINATURA DO ANALISTA DE TI ======
+    function carregarAssinaturaTI(event) {
         const file = event.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = function(e) {
             const dataUrl = e.target.result;
-            document.getElementById('docLogoImg').src = dataUrl;
-            localStorage.setItem('omni_logo_custom', dataUrl);
-            showToast("Logo customizada carregada!");
+            const t = termosLote[indiceTermoAtivo];
+            t.sigTI = dataUrl;
+            atualizarPrevia();
+            showToast("Assinatura do TI anexada com sucesso!");
         };
         reader.readAsDataURL(file);
     }
 
-    function restaurarLogoPadrao() {
-        localStorage.removeItem('omni_logo_custom');
-        document.getElementById('docLogoImg').src = LOGO_PADRAO_OMNI;
-        showToast("Logo padrão restaurada!");
+    function removerAssinaturaTI() {
+        const t = termosLote[indiceTermoAtivo];
+        t.sigTI = null;
+        atualizarPrevia();
+        showToast("Assinatura removida.");
     }
 
-    function inicializarLogo() {
-        const salva = localStorage.getItem('omni_logo_custom');
-        document.getElementById('docLogoImg').src = salva ? salva : LOGO_PADRAO_OMNI;
-    }
-
-    // ====== AUTENTICAÇÃO DO TI ======
+    // ====== AUTENTICAÇÃO ======
     async function autenticar() {
         const u = document.getElementById('lUser').value.trim();
         const p = document.getElementById('lPass').value.trim();
@@ -1038,19 +944,11 @@
         document.getElementById('docDataExtenso').innerText = `Rio de Janeiro, ${formatarDataExtenso(t.dataTermo)}`;
         document.getElementById('docDataRodape').innerText = formatarDataPadrao(t.dataTermo);
         document.getElementById('docUsuario').innerText = t.nomeColaborador || 'Nome do Colaborador';
-        document.getElementById('docCPF').innerText = t.cpfColaborador || '________________________';
         document.getElementById('docCargo').innerText = cargoFinal;
         document.getElementById('docBase').innerText = baseFinal;
         document.getElementById('docTI').innerText = nomeTI;
 
-        // Injeta as assinaturas digitais capturadas
-        const stampColab = document.getElementById('stampSigColab');
-        if (t.sigColaborador) {
-            stampColab.innerHTML = `<img src="${t.sigColaborador}" class="doc-sig-stamp">`;
-        } else {
-            stampColab.innerHTML = "";
-        }
-
+        // Injeta a assinatura anexada do TI
         const stampTI = document.getElementById('stampSigTI');
         if (t.sigTI) {
             stampTI.innerHTML = `<img src="${t.sigTI}" class="doc-sig-stamp">`;
@@ -1080,10 +978,8 @@
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        const pdfBlob = await html2pdf().from(elemento).set(opt).output('blob');
-        html2pdf().from(elemento).set(opt).save();
+        await html2pdf().from(elemento).set(opt).save();
 
-        // Salva metadados no Firebase Realtime Database
         const payload = {
             tipoTermo: t.tipoTermo,
             tipoEquipamento: document.getElementById('docEquipamentoTexto').innerText,
@@ -1095,17 +991,15 @@
             isPrimeiroUser: t.flagPrimeiro ? 'Sim' : 'Não',
             data: t.dataTermo,
             nomeColaborador: t.nomeColaborador,
-            cpfColaborador: t.cpfColaborador,
             cargoSetor: t.cargoSelect === 'OUTRO' ? t.cargoManual : t.cargoSelect,
             base: t.baseSelect === 'OUTRO' ? t.baseManual : t.baseSelect,
             tiResponsavel: logado ? logado.nome : 'Analista TI',
-            temAssinaturaColab: !!t.sigColaborador,
             temAssinaturaTI: !!t.sigTI,
             criadoEm: new Date().toISOString()
         };
 
         rootDatabase.ref('termos_responsabilidade').push(payload).then(() => {
-            showToast("Termo e assinaturas salvos com sucesso no Firebase!");
+            showToast("Termo registrado no banco de dados com sucesso!");
         });
     }
 
@@ -1141,7 +1035,7 @@
                     <td>${t.patrimonio}</td>
                     <td>${t.base}</td>
                     <td>${t.tiResponsavel}</td>
-                    <td>${t.temAssinaturaColab ? '✍️ Assinado' : '📄 Sem Assinatura'}</td>
+                    <td>${t.temAssinaturaTI ? '✍️ TI Assinado' : '📄 Sem Assinatura'}</td>
                 </tr>`;
             });
         });
@@ -1159,10 +1053,8 @@
             document.getElementById('telaLogin').style.display = 'flex';
         }
 
-        inicializarLogo();
-        initCanvas();
+        escutarLogoFixaFirebase();
         
-        // Inicia com o primeiro termo no lote
         termosLote.push(criarTermoVazio(0));
         indiceTermoAtivo = 0;
         carregarEstadoTermoAtual();
