@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Omni Táxi Aéreo - Gerador de Termos TI</title>
+  <title>Omni Táxi Aéreo - Emissão de Termos TI</title>
 
   <!-- Firebase RTDB compat -->
   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -17,13 +17,13 @@
       --panel: rgba(15, 23, 42, 0.9);
       --text: #f8fafc;
       --muted: #94a3b8;
-      --brand: #0ea5e9;
-      --brand-glow: rgba(14, 165, 233, 0.15);
+      --brand: #0284c7;
+      --brand-glow: rgba(2, 132, 199, 0.15);
       --success: #10b981;
       --danger: #ef4444;
       --border: rgba(255, 255, 255, 0.08);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      --radius: 16px;
+      --radius: 14px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
@@ -88,71 +88,106 @@
     input:checked + .slider { background-color: var(--brand); }
     input:checked + .slider:before { transform: translateX(20px); }
 
+    /* TABELA HISTÓRICO */
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 10px; }
+    th { text-align: left; padding: 12px 14px; color: var(--muted); font-weight: 800; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.7rem; }
+    td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+
     /* ==========================================================================
-       ESTILO DO TERMO OFICIAL A4 PARA IMPRESSÃO
+       ESTILO DA FOLHA A4 - DESIGN CORPORATIVO EXECUTIVO OMNI
     ========================================================================== */
     .document-preview-container {
-      background: #334155;
-      padding: 30px;
+      background: #1e293b;
+      padding: 35px 20px;
       border-radius: var(--radius);
       display: flex;
       justify-content: center;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     .doc-page {
       background: #ffffff;
-      color: #1e293b;
+      color: #0f172a;
       width: 210mm;
       min-height: 297mm;
-      padding: 20mm 22mm;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.5);
-      font-family: 'Arial', sans-serif;
-      font-size: 10.5pt;
-      line-height: 1.55;
+      padding: 16mm 20mm;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 9.8pt;
+      line-height: 1.5;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      box-sizing: border-box;
+      border-top: 6px solid #005696;
     }
 
     .doc-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 2px solid #0284c7;
+      border-bottom: 1.5px solid #005696;
       padding-bottom: 12px;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
     }
 
-    .doc-logo-svg {
-      height: 48px;
-      width: auto;
+    .doc-logo-img {
+      max-height: 52px;
+      max-width: 210px;
+      object-fit: contain;
     }
 
     .doc-header-text {
       text-align: right;
     }
-    .doc-title { font-size: 13pt; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: -0.3px; }
-    .doc-subtitle { font-size: 9.5pt; font-weight: 700; color: #0284c7; text-transform: uppercase; }
+    .doc-title { font-size: 13pt; font-weight: 900; color: #005696; text-transform: uppercase; letter-spacing: -0.2px; }
+    .doc-subtitle { font-size: 9.5pt; font-weight: 700; color: #64748b; text-transform: uppercase; margin-top: 2px; }
 
     .doc-body { text-align: justify; }
-    .doc-body p { margin-bottom: 14px; color: #334155; }
+    .doc-body p { margin-bottom: 12px; color: #334155; }
 
-    .doc-specs {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-left: 4px solid #0284c7;
+    /* TABELA DE ESPECIFICAÇÕES DO EQUIPAMENTO */
+    .specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 16px 0;
+      border: 1px solid #cbd5e1;
       border-radius: 6px;
-      padding: 14px 18px;
-      margin: 18px 0;
+      overflow: hidden;
     }
-    .doc-specs-item { margin-bottom: 6px; font-size: 10pt; color: #1e293b; }
-    .doc-specs-item strong { display: inline-block; width: 185px; color: #0f172a; }
+    .specs-table td {
+      padding: 6px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 9.3pt;
+      color: #1e293b;
+    }
+    .specs-table tr:nth-child(even) { background-color: #f8fafc; }
+    .specs-table td.label-col {
+      width: 32%;
+      font-weight: 700;
+      color: #005696;
+      border-right: 1px solid #e2e8f0;
+      background-color: #f1f5f9;
+      text-transform: uppercase;
+      font-size: 8.5pt;
+    }
 
-    .doc-footer { margin-top: 15px; }
-    .doc-signatures { margin-top: 30px; }
-    .sig-line { margin-top: 28px; display: flex; justify-content: space-between; }
-    .sig-field { border-top: 1.5px solid #0f172a; padding-top: 5px; font-size: 9.5pt; font-weight: 600; width: 48%; color: #0f172a; }
+    /* CARD DE DADOS DO USUÁRIO */
+    .user-info-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #005696;
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin-top: 14px;
+      font-size: 9.5pt;
+      line-height: 1.6;
+    }
+
+    .doc-footer { margin-top: 10px; }
+    .doc-signatures { margin-top: 22px; }
+    .sig-line { margin-top: 24px; display: flex; justify-content: space-between; }
+    .sig-field { border-top: 1.5px solid #0f172a; padding-top: 4px; font-size: 9pt; font-weight: 700; width: 48%; color: #0f172a; }
 
     /* MODO DE IMPRESSÃO (CTRL + P) */
     @media print {
@@ -160,7 +195,7 @@
       .sidebar, .card:not(.doc-card), .no-print, #toast-container, #telaLogin { display: none !important; }
       .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; }
       .document-preview-container { background: transparent !important; padding: 0 !important; }
-      .doc-page { width: 100% !important; min-height: 100vh !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      .doc-page { width: 100% !important; min-height: 100vh !important; box-shadow: none !important; padding: 15mm 15mm !important; margin: 0 !important; border-top: 6px solid #005696 !important; }
     }
   </style>
 </head>
@@ -168,7 +203,7 @@
 
 <div id="toast-container"></div>
 
-<!-- TELA DE LOGIN (VINCULA O ANALISTA AO TERMO) -->
+<!-- TELA DE LOGIN -->
 <div id="telaLogin">
   <div class="login-card">
     <div style="font-size: 3rem; margin-bottom: 15px;">🚁</div>
@@ -217,6 +252,21 @@
         </div>
       </div>
 
+      <!-- PERSONALIZAÇÃO DE LOGO PNG -->
+      <div style="background: rgba(2, 132, 199, 0.05); padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(2, 132, 199, 0.2); margin-bottom: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 700; color: var(--brand);">🖼️ Logo da Omni na Folha</span>
+            <p style="font-size: 0.75rem; color: var(--muted); margin-top: 2px;">Carregue o arquivo PNG da logo ou utilize a logo corporativa padrão.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="file" id="uploadLogoPng" accept="image/png, image/jpeg" style="display: none;" onchange="carregarLogoCustomizada(event)">
+            <button class="btn" style="padding: 6px 14px; font-size: 0.78rem;" onclick="document.getElementById('uploadLogoPng').click()">📁 Escolher PNG</button>
+            <button class="btn" style="padding: 6px 14px; font-size: 0.78rem;" onclick="restaurarLogoPadrao()">🔄 Logo Padrão</button>
+          </div>
+        </div>
+      </div>
+
       <!-- TIPO DE TERMO & EQUIPAMENTO -->
       <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 16px;">
         <div>
@@ -228,9 +278,10 @@
         </div>
         <div>
           <label>Equipamento Principal*</label>
-          <select id="tipoEquipamento" onchange="alternarCamposNotebook(); atualizarPrevia();">
+          <select id="tipoEquipamento" onchange="alternarCamposEquipamento(); atualizarPrevia();">
             <option value="Notebook">Notebook</option>
             <option value="Desktop">Desktop</option>
+            <option value="Monitor">Monitor (Dell)</option>
           </select>
         </div>
         <div>
@@ -240,7 +291,7 @@
       </div>
 
       <!-- ACESSÓRIOS NOTEBOOK -->
-      <div id="boxNotebook" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; background: rgba(14, 165, 233, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 16px;">
+      <div id="boxNotebook" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; background: rgba(2, 132, 199, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(2, 132, 199, 0.2); margin-bottom: 16px;">
         <div>
           <label>Acompanha Carregador?</label>
           <div class="switch-container">
@@ -275,13 +326,20 @@
         <div>
           <label>Modelo do Equipamento*</label>
           <select id="modeloSelect" onchange="alternarModeloManual(); atualizarPrevia();">
+            <!-- Notebooks -->
             <option value="Latitude 3420">Dell Latitude 3420</option>
             <option value="Latitude 3440">Dell Latitude 3440</option>
             <option value="Latitude 5420">Dell Latitude 5420</option>
             <option value="Vostro 3520">Dell Vostro 3520</option>
+            <!-- Desktops -->
             <option value="OptiPlex 3080">Dell OptiPlex 3080 (Desktop)</option>
             <option value="OptiPlex 7090">Dell OptiPlex 7090 (Desktop)</option>
-            <option value="OUTRO">Outro (Digitar Manualmente)</option>
+            <!-- Monitores Dell -->
+            <option value="Dell P2419H (24')">Dell P2419H (24")</option>
+            <option value="Dell P2422H (24')">Dell P2422H (24")</option>
+            <option value="Dell E2222H (21.5')">Dell E2222H (21.5")</option>
+            <option value="Dell SE2422H (24')">Dell SE2422H (24")</option>
+            <option value="OUTRO">Outro Modelo (Digitar)</option>
           </select>
           <input type="text" id="modeloManual" placeholder="Digite o modelo..." style="display: none; margin-top: 6px;" oninput="atualizarPrevia()">
         </div>
@@ -365,10 +423,10 @@
       </div>
     </div>
 
-    <!-- FOLHA A4 - PRÉVIA OFICIAL COM LOGO -->
+    <!-- FOLHA A4 - DESIGN CORPORATIVO EXECUTIVO -->
     <div class="card doc-card">
       <div class="card-header no-print">
-        <span>📄 Prévia do Termo A4 (Design Oficial)</span>
+        <span>📄 Prévia do Termo A4</span>
         <button class="btn btn-success" onclick="imprimirTermo()">🖨️ Imprimir / Salvar PDF</button>
       </div>
 
@@ -376,16 +434,10 @@
         <div class="doc-page" id="folhaTermo">
           
           <div>
-            <!-- CABEÇALHO COM LOGO OFICIAL OMNI TÁXI AÉREO -->
+            <!-- CABEÇALHO OFICIAL COM LOGO PNG -->
             <div class="doc-header">
-              <div style="display: flex; align-items: center; gap: 15px;">
-                <svg class="doc-logo-svg" viewBox="0 0 320 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 80L50 10L75 10L35 80H10Z" fill="#0284c7"/>
-                  <path d="M38 80L78 10L103 10L63 80H38Z" fill="#0369a1"/>
-                  <path d="M66 80L106 10L131 10L91 80H66Z" fill="#64748b"/>
-                  <text x="145" y="62" font-family="'Arial Black', Impact, sans-serif" font-size="52" font-weight="900" fill="#0f172a" letter-spacing="-2">omni</text>
-                  <text x="148" y="85" font-family="'Arial', sans-serif" font-size="19" font-weight="bold" fill="#0284c7" letter-spacing="1">táxi aéreo</text>
-                </svg>
+              <div>
+                <img id="docLogoImg" class="doc-logo-img" alt="Omni Táxi Aéreo">
               </div>
               <div class="doc-header-text">
                 <div class="doc-title" id="docTitulo">TERMO DE RESPONSABILIDADE</div>
@@ -393,35 +445,58 @@
               </div>
             </div>
 
-            <!-- CORPO DO DOCUMENTO -->
+            <!-- CORPO DO DOCUMENTO[cite: 1, 2] -->
             <div class="doc-body">
-              <p>Pelo presente instrumento, comprometo-me perante a <strong>OMNI Táxi Aéreo</strong>, na qualidade de empregado (a) ou consultor (a), a devolver em perfeitas condições de uso, a qualquer tempo que me for solicitado, os equipamentos entregues para utilização durante a minha prestação de serviços na companhia, conforme as especificações abaixo:</p>
+              <p>Pelo presente instrumento, comprometo-me perante a <strong>OMNI Táxi Aéreo</strong>, na qualidade de empregado (a) ou consultor (a), a devolver em perfeitas condições de uso, a qualquer tempo que me for solicitado, os equipamentos entregues para utilização durante a minha prestação de serviços na companhia, conforme as especificações abaixo[cite: 1, 2]:</p>
 
-              <div class="doc-specs">
-                <div class="doc-specs-item"><strong>Equipamento:</strong> <span id="docEquipamentoTexto">Notebook + Carregador + Mochila (Dell)</span></div>
-                <div class="doc-specs-item"><strong>Modelo:</strong> <span id="docModelo">Latitude 3420</span></div>
-                <div class="doc-specs-item"><strong>Service tag:</strong> <span id="docServiceTag">5F3Z1Z3</span></div>
-                <div class="doc-specs-item"><strong>Nome do Equipamento:</strong> <span id="docHostname">OMNI-000637</span></div>
-                <div class="doc-specs-item"><strong>Patrimônio:</strong> <span id="docPatrimonio">000637</span></div>
-                <div class="doc-specs-item"><strong>Equipamento Novo?</strong> <span id="docNovoStatus">Sim ( ) &nbsp; Não ( X )</span></div>
-                <div class="doc-specs-item"><strong>Primeiro usuário?</strong> <span id="docPrimeiroStatus">Sim ( ) &nbsp; Não ( X )</span></div>
+              <!-- TABELA ESTRUTURADA DE ESPECIFICAÇÕES[cite: 1, 2] -->
+              <table class="specs-table">
+                <tr>
+                  <td class="label-col">Equipamento</td>
+                  <td><strong id="docEquipamentoTexto">Notebook + Carregador + Mochila (Dell)</strong></td>
+                </tr>
+                <tr>
+                  <td class="label-col">Modelo</td>
+                  <td id="docModelo">Latitude 3420</td>
+                </tr>
+                <tr>
+                  <td class="label-col">Service Tag</td>
+                  <td style="font-family: monospace; font-size: 10.5pt; font-weight: 700;" id="docServiceTag">5F3Z1Z3</td>
+                </tr>
+                <tr>
+                  <td class="label-col">Nome Equipamento</td>
+                  <td id="docHostname">OMNI-000637</td>
+                </tr>
+                <tr>
+                  <td class="label-col">Patrimônio</td>
+                  <td id="docPatrimonio">000637</td>
+                </tr>
+                <tr>
+                  <td class="label-col">Equipamento Novo?</td>
+                  <td id="docNovoStatus">Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong></td>
+                </tr>
+                <tr>
+                  <td class="label-col">Primeiro Usuário?</td>
+                  <td id="docPrimeiroStatus">Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong></td>
+                </tr>
+              </table>
+
+              <p style="font-size: 9.3pt; line-height: 1.45;">O equipamento deve ser testado logo no ato da retirada, para averiguar eventuais problemas, que não sejam decorrentes de fabricação[cite: 1, 2].</p>
+              <p style="font-size: 9.3pt; line-height: 1.45;">Desta forma, declaro ter recebido da OMNI Táxi Aéreo, os equipamentos de Informática constantes que ficam sobre minha responsabilidade e que farei uso dos mesmos nos locais de trabalho para executar as tarefas referentes à minha função[cite: 1, 2].</p>
+
+              <!-- DADOS DO COLABORADOR[cite: 1, 2] -->
+              <div class="user-info-card">
+                <div><strong>Nome do Usuário:</strong> <span id="docUsuario">Ana Paula dos Santos Cardoso</span></div>
+                <div><strong>Cargo / Setor:</strong> <span id="docCargo">Assistente Administrativo PCP</span></div>
+                <div><strong>BASE:</strong> <span id="docBase">JPA2</span></div>
               </div>
-
-              <p style="font-size: 9.8pt;">O equipamento deve ser testado logo no ato da retirada, para averiguar eventuais problemas, que não sejam decorrentes de fabricação.</p>
-              <p style="font-size: 9.8pt;">Desta forma, declaro ter recebido da OMNI Táxi Aéreo, os equipamentos de Informática constantes que ficam sobre minha responsabilidade e que farei uso dos mesmos nos locais de trabalho para executar as tarefas referentes à minha função.</p>
             </div>
           </div>
 
-          <!-- RODAPÉ & ASSINATURAS -->
+          <!-- RODAPÉ & ASSINATURAS[cite: 1, 2] -->
           <div class="doc-footer">
-            <p id="docDataExtenso" style="margin-bottom: 22px; font-weight: 500;">Rio de Janeiro, 18 de agosto de 2026</p>
+            <p id="docDataExtenso" style="margin-bottom: 20px; font-weight: 600; color: #005696;">Rio de Janeiro, 18 de agosto de 2026</p>
             
-            <div style="font-size: 10.5pt; line-height: 1.65; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <div><strong>Nome do Usuário:</strong> <span id="docUsuario">Ana Paula dos Santos Cardoso</span></div>
-              <div><strong>Cargo / Setor:</strong> <span id="docCargo">Assistente Administrativo PCP</span></div>
-              <div><strong>BASE:</strong> <span id="docBase">JPA2</span></div>
-            </div>
-
             <div class="doc-signatures">
               <div class="sig-line">
                 <div class="sig-field">Assinatura: _____________________________</div>
@@ -433,7 +508,7 @@
               </div>
             </div>
 
-            <div style="margin-top: 25px; font-size: 8pt; color: #64748b; display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 6px;">
+            <div style="margin-top: 22px; font-size: 7.8pt; color: #64748b; display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 5px;">
               <span>OMNI Táxi Aéreo</span>
               <span>Tecnologia da Informação</span>
               <span id="docDataRodape">18/08/2026</span>
@@ -477,6 +552,9 @@
 
     let logado = null;
 
+    // LOGO VETORIZADA SVG BASE64 (PADRÃO OMNI TÁXI AÉREO)
+    const LOGO_PADRAO_OMNI = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 90'><path d='M10 75L50 8L74 8L34 75H10Z' fill='%23005696'/><path d='M38 75L78 8L102 8L62 75H38Z' fill='%230284c7'/><path d='M66 75L106 8L130 8L90 75H66Z' fill='%2364748b'/><text x='140' y='58' font-family='Arial Black, sans-serif' font-size='50' font-weight='900' fill='%23005696' letter-spacing='-2'>omni</text><text x='144' y='78' font-family='Arial, sans-serif' font-size='17' font-weight='bold' fill='%230284c7' letter-spacing='1'>táxi aéreo</text></svg>";
+
     function getHojeISO() { return new Date().toISOString().split('T')[0]; }
 
     function showToast(msg, type = 'success') {
@@ -484,6 +562,32 @@
         t.style.borderLeft = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
         t.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
         c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+    }
+
+    // ====== GERENCIAMENTO DA LOGO PNG ======
+    function carregarLogoCustomizada(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            document.getElementById('docLogoImg').src = dataUrl;
+            localStorage.setItem('omni_logo_custom', dataUrl);
+            showToast("Logo customizada carregada!");
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function restaurarLogoPadrao() {
+        localStorage.removeItem('omni_logo_custom');
+        document.getElementById('docLogoImg').src = LOGO_PADRAO_OMNI;
+        showToast("Logo padrão restaurada!");
+    }
+
+    function inicializarLogo() {
+        const salva = localStorage.getItem('omni_logo_custom');
+        document.getElementById('docLogoImg').src = salva ? salva : LOGO_PADRAO_OMNI;
     }
 
     // ====== AUTENTICAÇÃO DO TI ======
@@ -518,9 +622,22 @@
     }
 
     // ====== CONTROLADORES DE CAMPOS DINÂMICOS ======
-    function alternarCamposNotebook() {
+    function alternarCamposEquipamento() {
         const tipo = document.getElementById('tipoEquipamento').value;
-        document.getElementById('boxNotebook').style.display = tipo === 'Notebook' ? 'grid' : 'none';
+        const boxNotebook = document.getElementById('boxNotebook');
+        const selModelo = document.getElementById('modeloSelect');
+
+        boxNotebook.style.display = tipo === 'Notebook' ? 'grid' : 'none';
+
+        // Auto-seleciona um modelo coerente
+        if (tipo === 'Monitor') {
+            selModelo.value = "Dell P2419H (24')";
+        } else if (tipo === 'Desktop') {
+            selModelo.value = "OptiPlex 3080";
+        } else if (tipo === 'Notebook') {
+            selModelo.value = "Latitude 3420";
+        }
+        alternarModeloManual();
     }
 
     function alternarTipoMochila() {
@@ -596,30 +713,31 @@
         const baseSel = document.getElementById('baseSelect').value;
         const baseFinal = baseSel === 'OUTRO' ? (document.getElementById('baseManual').value || 'Base') : baseSel;
 
-        // TI Responsável (bloqueado)
         const nomeTI = logado ? logado.nome : (document.getElementById('nomeTI').value || 'Analista TI');
 
-        // Título Oficial
+        // Título Oficial[cite: 1, 2]
         document.getElementById('docTitulo').innerText = tipoTermo === 'ENTREGA' 
             ? "TERMO DE RESPONSABILIDADE" 
             : "TERMO DE RESPONSABILIDADE (Devolução de equipamento)";
 
-        // Montagem do Equipamento
+        // Montagem do Equipamento[cite: 1, 2]
         let equipTexto = tipoEquip;
         if (tipoEquip === 'Notebook') {
             if (temCarregador) equipTexto += " + Carregador";
             if (temMochila) equipTexto += ` + Mochila (${marcaMochila})`;
+        } else if (tipoEquip === 'Monitor') {
+            equipTexto = "Monitor Dell";
         }
         document.getElementById('docEquipamentoTexto').innerText = equipTexto;
 
-        // Injeção dos dados no Termo
+        // Injeção dos dados no Termo[cite: 1, 2]
         document.getElementById('docModelo').innerText = modeloFinal;
         document.getElementById('docServiceTag').innerText = st;
         document.getElementById('docHostname').innerText = hostFinal;
         document.getElementById('docPatrimonio').innerText = pat;
 
-        document.getElementById('docNovoStatus').innerText = isNovo ? "Sim ( X )   Não ( )" : "Sim ( )   Não ( X )";
-        document.getElementById('docPrimeiroStatus').innerText = isPrimeiro ? "Sim ( X )   Não ( )" : "Sim ( )   Não ( X )";
+        document.getElementById('docNovoStatus').innerHTML = isNovo ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
+        document.getElementById('docPrimeiroStatus').innerHTML = isPrimeiro ? "<strong>Sim ( X )</strong> &nbsp;&nbsp;&nbsp; Não ( )" : "Sim ( ) &nbsp;&nbsp;&nbsp; <strong>Não ( X )</strong>";
 
         document.getElementById('docDataExtenso').innerText = `Rio de Janeiro, ${formatarDataExtenso(dataVal)}`;
         document.getElementById('docDataRodape').innerText = formatarDataPadrao(dataVal);
@@ -717,7 +835,8 @@
         }
 
         document.getElementById('dataTermo').value = getHojeISO();
-        alternarCamposNotebook();
+        inicializarLogo();
+        alternarCamposEquipamento();
         alternarTipoMochila();
         atualizarPrevia();
     };
